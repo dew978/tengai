@@ -5,19 +5,26 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#05060c">
 <title>사신비행 四神飛行</title>
+<link rel="preload" as="image" href="art/title.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&family=Black+Han+Sans&family=Gowun+Batang:wght@700&display=swap" rel="stylesheet">
 <style>
-/* VOICE: 90년대 오락실 횡스크롤 슈팅, 달밤의 조선 판타지 + 증기기관
-   IDEA: 오락실 기판 화면 — 도트 그래픽이 화면 전체를 채운다
-   PICTURE: 게임 캔버스 자체가 그림(640x360, 도트 2배 확대)
-   COLOUR: 남색 밤하늘, 금빛 엽전, 주홍 불탄, 청록 강조 / TYPE: 나눔붓글씨(컷인·제목) + 검은고딕(HUD)
-   LAYOUT: 캔버스 꽉 채움, 오른쪽 아래 엄지 버튼 2개, 메뉴는 캔버스 위 오버레이 */
 :root{color-scheme:dark;--gold:#f5c542;--ink:#f3ecd8;--navy:#0b1230;--teal:#45d6c8;--red:#d8352a}
 *{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:#05060c;color:var(--ink);overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:"Gowun Batang","Noto Serif KR",serif}
+html,body{margin:0;height:100%;background:#05060c;color:var(--ink);overflow:hidden;-webkit-user-select:none;user-select:none;font-family:"Gowun Batang","Noto Serif KR",serif}
 #c{position:absolute;image-rendering:pixelated;image-rendering:crisp-edges;background:#000;touch-action:none}
+#titleScreen[hidden]{display:none}
+#titleScreen{position:fixed;inset:0;z-index:4;display:grid;grid-template-rows:auto 1fr auto;align-items:center;justify-items:center;padding:clamp(16px,4.4vh,48px) 16px;overflow:hidden;isolation:isolate;background:#111a31;text-align:center}
+#titleScreen::before,#titleScreen::after{content:"";position:absolute;inset:0;pointer-events:none}
+#titleScreen::before{z-index:-2;background:url("art/title.webp") center 49%/cover no-repeat}
+#titleScreen::after{z-index:-1;background:linear-gradient(180deg,#0b102bd9 0%,#101a3626 38%,transparent 59%,#0a1027e8 100%)}
+.title-heading{align-self:start;display:grid;justify-items:center;gap:3px}
+.title-heading h1{margin:0;color:#ffe7b0;font:400 clamp(52px,15vh,128px)/.95 "Nanum Brush Script","Gowun Batang",serif;text-shadow:0 3px #562b33,0 5px 0 #140f22,0 8px 28px #080b1e}
+.title-seal{display:inline-block;padding:2px 8px;border:1px solid #f0a977;background:#803842;color:#ffe8bd;font:700 clamp(12px,2.3vh,22px)/1.25 "Gowun Batang",serif;letter-spacing:.18em}
+.title-actions{grid-row:3;display:grid;justify-items:center;gap:8px}
+#startGame{min-width:146px;min-height:46px;padding:8px 25px;border-radius:3px;border-color:#ffd990;box-shadow:0 0 0 3px #201827,0 0 28px #de89594f;font-size:clamp(18px,3vh,24px)}
+#titleBest{color:#ffddb0;text-shadow:0 2px 4px #090c1c;font-size:13px}
 #st{position:absolute;pointer-events:none}
 #st>*{pointer-events:auto}
 .btn{position:absolute;border-radius:50%;border:2px solid rgba(245,197,66,.85);background:radial-gradient(circle at 40% 35%,rgba(120,30,30,.75),rgba(30,8,10,.75));color:#ffe9a8;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:"Black Han Sans",sans-serif;touch-action:none;padding:0;box-shadow:0 0 12px rgba(0,0,0,.6),inset 0 0 10px rgba(255,200,80,.25)}
@@ -47,8 +54,16 @@ html,body{margin:0;height:100%;background:#05060c;color:var(--ink);overflow:hidd
 .seg button{min-height:40px;padding:6px 14px;border:0;background:rgba(0,0,0,.35);color:#ddd;font:400 15px "Black Han Sans",sans-serif}
 .seg button.sel{background:#f5c542;color:#2a1405}
 .keys{font-size:12px!important;opacity:.75}
-#rot{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);padding:8px 14px;border-radius:20px;background:rgba(20,30,70,.9);border:1px solid var(--gold);font:400 14px "Black Han Sans",sans-serif;display:none;z-index:5}
-@media (orientation:portrait){#rot{display:block}}
+#rot{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);padding:8px 12px;border:1px solid #806c52;border-radius:3px;background:#111a30;color:#e7d5b3;font:400 13px "Black Han Sans",sans-serif;display:none;pointer-events:none}
+@media (orientation:portrait){
+  body{background:radial-gradient(ellipse at center,#23314a,#0d1224 70%)}
+  body.is-playing #rot{display:block}
+  #titleScreen{padding:clamp(35px,11vh,104px) 16px max(38px,8vh,env(safe-area-inset-bottom))}
+  #titleScreen::before{background-position:85% 50%}
+  #titleScreen::after{background:linear-gradient(180deg,#0b102bef 0%,#0f193773 28%,transparent 43%,#0a1027ce 81%,#0a1027 100%)}
+  .title-heading h1{font-size:clamp(49px,17vw,100px)}
+  #ov.show{position:fixed;inset:0;z-index:3;padding:12px}
+}
 @media (max-height:420px){.card .sp{height:40px}.pan{padding:8px 12px 10px}.card small{font-size:11px}}
 </style>
 </head>
@@ -61,7 +76,17 @@ html,body{margin:0;height:100%;background:#05060c;color:var(--ink);overflow:hidd
   <button id="bBomb" class="btn" aria-label="필살기"><b>必</b><small>필살기</small></button>
   <div id="ov"></div>
 </div>
-<div id="rot">휴대폰을 가로로 돌리면 화면이 커져요</div>
+<section id="titleScreen" aria-labelledby="gameTitle">
+  <div class="title-heading">
+    <h1 id="gameTitle">사신비행</h1>
+    <span class="title-seal" lang="zh-Hant">四神飛行</span>
+  </div>
+  <div class="title-actions">
+    <button class="mb" id="startGame" type="button">게임 시작</button>
+    <span id="titleBest"></span>
+  </div>
+</section>
+<div id="rot">가로로 돌리면 전투 화면이 커져요</div>
 <script>
 {
 'use strict';
@@ -899,6 +924,7 @@ function drawAtmosphere(stage,scroll,time){
   X.restore();
 }
 function render(){
+  if(G.state==='title')return;
   X.save();X.imageSmoothingEnabled=false;
   if(G.shake){X.translate(rnd(-1,1)*Math.min(6,G.shake),rnd(-1,1)*Math.min(6,G.shake));}
   const st=G.state=='play'||G.state=='clear'||G.state=='over'?G.stage:(G.menuStage||0);
@@ -908,7 +934,6 @@ function render(){
   if(G.state=='play'||G.state=='over'||G.state=='clear'){drawWorld();}
   X.restore();
   if(G.state=='play'||G.state=='over'||G.state=='clear')drawHUD();
-  if(G.state=='title')drawTitle();
   if(G.flash){X.fillStyle='rgba(255,255,255,'+(G.flash/24)+')';X.fillRect(0,0,W,H);}
 }
 function drawWorld(){const p=G.p,fr=(G.t>>3)&1;
@@ -1113,21 +1138,21 @@ function drawHUD(){const p=G.p,ch=CH[p.ch];
   if(G.phase=='clear'){const t=G.t-G.pt0,a=Math.min(1,t/20);X.globalAlpha=a;txt(STG[G.stage].name+' 돌파!',W/2,H/2-10,46,'#f5c542','center',BR,'#3a0a08',6);X.globalAlpha=1;}
   if(G.paused){X.fillStyle='rgba(0,0,0,.5)';X.fillRect(0,0,W,H);}
 }
-function drawTitle(){const t=G.menuT||0;X.fillStyle='rgba(2,4,14,.35)';X.fillRect(0,0,W,H);
-  ds(A.pl[0][(t>>3)&1],150+Math.sin(t*.03)*8,200+Math.sin(t*.05)*10,2.4);ds(A.pl[1][(t>>3)&1],110+Math.sin(t*.04)*8,250+Math.cos(t*.05)*8,2.2);ds(A.pl[2][(t>>3)&1],120+Math.cos(t*.035)*8,150+Math.sin(t*.045)*8,2.2);
-  ds(A.dok,520,170+Math.sin(t*.02)*10,1.7);
-  X.globalCompositeOperation='lighter';X.globalAlpha=.35;dg(A.gW,W/2,90,300);X.globalAlpha=1;X.globalCompositeOperation='source-over';
-  txt('사신비행',W/2,88,92,'#ffe9a8','center',BR,'#3a0a08',8);
-  X.fillStyle='#c8231c';X.fillRect(W/2+150,52,30,64);txt('四',W/2+165,66,22,'#ffe9a8','center','"Gowun Batang",serif',null);txt('神',W/2+165,86,22,'#ffe9a8','center','"Gowun Batang",serif',null);txt('飛',W/2+165,106,22,'#ffe9a8','center','"Gowun Batang",serif',null);
-  txt('달을 삼키려는 흑철 요괴군을 막아라',W/2,148,14,'#cfd8ff','center','"Gowun Batang",serif','#000',3);
-  if((t>>5)%2==0)txt('화면을 눌러 시작',W/2,300,18,'#ffffff','center',HF,'#000',4);
-  txt('최고 점수 '+G.hi.toLocaleString(),W/2,328,11,'#f5c542','center');}
-
 /* ================= UI / 오버레이 ================= */
 const ov=document.getElementById('ov'),stEl=document.getElementById('st'),bB=document.getElementById('bBomb'),bC=document.getElementById('bChg'),bP=document.getElementById('bPause'),bM=document.getElementById('bMute');
 function showOv(h){ov.innerHTML=h;ov.classList.add('show');}
 function hideOv(){ov.classList.remove('show');ov.innerHTML='';}
-function showUI(){const on=G.state=='play';bB.style.display=bC.style.display=bP.style.display=on?'flex':'none';}
+const titleScreen=document.getElementById('titleScreen'),startGame=document.getElementById('startGame');
+const titleBest=document.getElementById('titleBest');
+function showUI(){
+  const on=G.state==='play',isTitle=G.state==='title';
+  bB.style.display=bC.style.display=bP.style.display=on?'flex':'none';
+  titleScreen.hidden=!isTitle;
+  document.body.classList.toggle('is-playing',on);
+  if(isTitle)titleBest.textContent='최고 점수 '+G.hi.toLocaleString();
+}
+function openSelection(){auInit();selectScreen();}
+startGame.addEventListener('click',openSelection);
 bM.textContent=AU.muted?'✕':'♪';
 function selectScreen(){G.state='select';showUI();const url=A.por.map(c=>c.toDataURL()),su=A.pl.map(s=>s[0].toDataURL());
   showOv(`<div class="pan"><h2>수호자 선택</h2><div class="cards">${CH.map((c,i)=>`<div class="card${i==G.ch?' sel':''}" data-c="${i}" role="button" tabindex="0"><img src="${url[i]}" alt=""><img class="sp" src="${su[i]}" alt=""><h3>${c.name}</h3><small>${c.full} · 필살 「${c.skill}」<br>${c.desc}</small></div>`).join('')}</div>
@@ -1162,7 +1187,6 @@ function fit(){const vw=window.innerWidth,vh=window.innerHeight;scale=Math.min(v
   bB.style.fontSize=bC.style.fontSize=(bs*.2)+'px';bP.style.left=(w*.015)+'px';bM.style.left=(w*.015+Math.max(34,w*.05)+8)+'px';bP.style.width=bM.style.width=Math.max(34,w*.05)+'px';}
 window.addEventListener('resize',fit);fit();
 cv.addEventListener('pointerdown',e=>{e.preventDefault();auInit();
-  if(G.state=='title'){selectScreen();return;}
   if(G.state=='play'&&!G.paused){drag.id=e.pointerId;drag.x=e.clientX;drag.y=e.clientY;try{cv.setPointerCapture(e.pointerId);}catch(_){} }});
 cv.addEventListener('pointermove',e=>{if(e.pointerId!==drag.id)return;IN.dx+=(e.clientX-drag.x)/scale*1.25;IN.dy+=(e.clientY-drag.y)/scale*1.25;drag.x=e.clientX;drag.y=e.clientY;});
 const endDrag=e=>{if(e.pointerId===drag.id)drag.id=null;};cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
@@ -1171,8 +1195,8 @@ function hold(el,down,up){el.addEventListener('pointerdown',e=>{e.preventDefault
 hold(bB,doBomb);hold(bC,()=>{IN.chg=true;},()=>{IN.chg=false;});
 bP.addEventListener('click',()=>pauseGame(!G.paused));
 bM.addEventListener('click',()=>{auInit();AU.muted=!AU.muted;if(AU.m)AU.m.gain.value=AU.muted?0:.5;bM.textContent=AU.muted?'✕':'♪';try{localStorage.setItem('ssb_mute',AU.muted?'1':'0');}catch(e){}});
-window.addEventListener('keydown',e=>{IN.k[e.key]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
-  if(G.state=='title'&&(e.key=='Enter'||e.key=='z'||e.key==' ')){auInit();selectScreen();}
+window.addEventListener('keydown',e=>{IN.k[e.key]=true;if(e.target!==startGame&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
+  if(G.state==='title'&&e.target!==startGame&&(e.key==='Enter'||e.key==='z'||e.key===' '))openSelection();
   if(G.state=='play'&&(e.key=='x'||e.key=='X'))doBomb();if(G.state=='play'&&(e.key=='Escape'||e.key=='p'))pauseGame(!G.paused);});
 window.addEventListener('keyup',e=>{IN.k[e.key]=false;});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&G.state=='play'&&!G.paused)pauseGame(true);});
