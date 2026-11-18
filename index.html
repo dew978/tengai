@@ -1163,7 +1163,8 @@ function boom(x,y,s=1,col){for(let i=0;i<10*s;i++){const a=R()*TAU,v=rnd(.5,3)*s
   for(let i=0;i<8*s;i++){const a=R()*TAU,v=rnd(2,6);G.pt.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:rnd(10,20),m:20,k:'k',c:col||'#ffe080'});}
   G.pt.push({x,y,vx:0,vy:0,l:14,m:14,k:'o',s:30*s});}
 function pop(x,y,txt,c='#ffe070',sz=11){G.pop.push({x,y,txt,c,sz,l:50});}
-const COIN_MAGNET_RADIUS=44;
+const COIN_MOTION_RATE=.5;
+const COIN_MAGNET_RADIUS=64;
 function coins(x,y,n){
   for(let i=0;i<n;i++){
     G.co.push({x,y,vx:-rnd(1.1,2.8),vy:-rnd(2.6,4.1),t:0,f:ri(0,3)});
@@ -1319,13 +1320,13 @@ function update(){
   // 엽전
   for(const c of G.co){
     c.t++;
-    c.x+=c.vx;
-    c.y+=c.vy;
-    c.vy=Math.min(c.vy+.11,4.5);
+    c.x+=c.vx*COIN_MOTION_RATE;
+    c.y+=c.vy*COIN_MOTION_RATE;
+    c.vy=Math.min(c.vy+.11*COIN_MOTION_RATE,4.5);
     const dx=p.x-c.x,dy=p.y-c.y;
     const distance=Math.hypot(dx,dy);
     if(!p.dead && distance>0 && distance<COIN_MAGNET_RADIUS){
-      const pull=.95*(1-distance/COIN_MAGNET_RADIUS);
+      const pull=2.0*(1-distance/COIN_MAGNET_RADIUS);
       c.x+=dx/distance*pull;
       c.y+=dy/distance*pull;
     }
