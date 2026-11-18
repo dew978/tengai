@@ -1164,7 +1164,7 @@ function boom(x,y,s=1,col){for(let i=0;i<10*s;i++){const a=R()*TAU,v=rnd(.5,3)*s
   G.pt.push({x,y,vx:0,vy:0,l:14,m:14,k:'o',s:30*s});}
 function pop(x,y,txt,c='#ffe070',sz=11){G.pop.push({x,y,txt,c,sz,l:50});}
 const COIN_MOTION_RATE=.5;
-const COIN_MAGNET_RADIUS=64;
+const COIN_MAGNET_RADIUS=100;
 function coins(x,y,n){
   for(let i=0;i<n;i++){
     G.co.push({x,y,vx:-rnd(1.1,2.8),vy:-rnd(2.6,4.1),t:0,f:ri(0,3)});
@@ -1326,7 +1326,7 @@ function update(){
     const dx=p.x-c.x,dy=p.y-c.y;
     const distance=Math.hypot(dx,dy);
     if(!p.dead && distance>0 && distance<COIN_MAGNET_RADIUS){
-      const pull=2.0*(1-distance/COIN_MAGNET_RADIUS);
+      const pull=3.0*(1-distance/COIN_MAGNET_RADIUS);
       c.x+=dx/distance*pull;
       c.y+=dy/distance*pull;
     }
