@@ -1221,7 +1221,7 @@ function genStage(n){
 /* ================= 데이터 ================= */
 const CH=[
  {name:'청운',full:'연검객 청운',beast:'청룡',skill:'청룡뇌격',quote:'"하늘이 갈라진다."',color:'#58b8ff',wpn:'검',desc:'초승달 검기를 부채꼴로. 균형형.',spd:3.1,mk:sCheong},
- {name:'연화',full:'방울무녀 연화',beast:'주작',skill:'주작염무',quote:'"불꽃이여, 춤추어라."',color:'#ff7a5a',wpn:'부',desc:'적을 쫓아가는 부적. 맞히기 쉽다.',spd:2.9,mk:sYeon},
+ {name:'연화',full:'방울무녀 연화',beast:'주작',skill:'주작염무',quote:'"불꽃이여, 춤추어라."',color:'#ff7a5a',wpn:'부',desc:'부채꼴로 퍼지는 부적. 넓게 맞힌다.',spd:2.9,mk:sYeon},
  {name:'솔비',full:'매사냥꾼 솔비',beast:'백호',skill:'백호천궁',quote:'"숨 한 번이면 끝나."',color:'#8affc0',wpn:'시',desc:'곧고 빠른 화살. 화력 최강, 범위 좁음.',spd:3.4,mk:sSol},
  {name:'해담',full:'거북선 포수 해담',beast:'현무',skill:'현무수벽',quote:'"한 발짝도 물러서지 않아."',color:'#4fe0c8',wpn:'수',desc:'물결치는 쌍수탄. 모아쏘기는 적탄을 지우는 소용돌이.',spd:2.8,mk:sHae},
 ];
@@ -1563,7 +1563,7 @@ function coins(x,y,n){
 function addShot(x,y,a,s,k,dmg,o){G.sh.push(Object.assign({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,k,dmg,r:k=='cres'?8:k=='tal'?6:k=='big'?26:k=='bigtal'?10:k=='wat'?6:k=='vort'?24:5,l:120,t:0},o));}
 function playerFire(){const p=G.p,lv=p.pow;if(p.charge>0)return;p.ft++;
   if(p.ch==0&&p.ft%7==0){const n=[1,3,3,5][lv-1],s=[0,.13,.09,.11][lv-1];for(let i=0;i<n;i++)addShot(p.x+18,p.y-4,(i-(n-1)/2)*s,8.5,'cres',lv>2?5:4.5);sfx('shot');}
-  if(p.ch==1&&p.ft%8==0){const n=[2,3,4,5][lv-1];for(let i=0;i<n;i++)addShot(p.x+14,p.y-2+(i-(n-1)/2)*6,(i-(n-1)/2)*.12,6,'tal',4.2,{home:1});sfx('shot');}
+  if(p.ch==1&&p.ft%8==0){const n=[2,3,4,5][lv-1];for(let i=0;i<n;i++)addShot(p.x+14,p.y-2+(i-(n-1)/2)*6,(i-(n-1)/2)*.12,6,'tal',4.2);sfx('shot');}
   if(p.ch==2&&p.ft%5==0){const n=[1,2,3,3][lv-1];for(let i=0;i<n;i++)addShot(p.x+20,p.y-2+(i-(n-1)/2)*7,(i-(n-1)/2)*(lv>3?.05:.015),12,'arr',lv>3?4.4:3.8);sfx('shot');}
   if(p.ch==3&&p.ft%6==0){const pairs=lv>2?2:1,dmg=lv>3?3.6:lv>1?3:2.6;
     for(let k=0;k<pairs;k++){const a=pairs>1?(k?.07:-.07):0;for(const ph of [0,PI])addShot(p.x+18,p.y-2,a,7.2,'wat',dmg,{ph,wv:lv>1?1.9:1.6});}sfx('shot');}
@@ -1574,10 +1574,10 @@ function releaseCharge(){const p=G.p;if(p.charge<60){p.charge=0;return;}p.charge
   if(p.ch==2)G.sh.push({k:'beam',x:p.x+20,y:p.y-2,l:34,t:0,dmg:2.6,r:9,pierce:1});
   if(p.ch==3)addShot(p.x+24,p.y-2,0,3.4,'vort',1.5,{pierce:1,l:190});}
 function doBomb(){const p=G.p;if(G.state!='play'||G.quizPause||p.bombs<=0||G.cut||G.bombFx||p.dead)return;p.bombs--;G.cut={t:0,ch:p.ch};p.inv=Math.max(p.inv,260);sfx('bomb');}
-// 사신오의: 고른 수호자의 신수가 앞장서고 나머지 세 신수가 차례로 뒤따른다.
-const BOMB_LEN=164,BEAST_GAP=20,BEAST_LEN=100;
+// 사신오의: 고른 수호자의 신수 하나만 나온다.
+const BOMB_LEN=120,BEAST_GAP=20,BEAST_LEN=100;
 const beastT=(f,b)=>f.t-f.order.indexOf(b)*BEAST_GAP;
-function startBombFx(){const p=G.p;G.bombFx={t:0,ch:p.ch,x:p.x,y:p.y,pts:[],order:[p.ch,...[0,1,2,3].filter(i=>i!==p.ch)]};for(const b of G.eb)coins(b.x,b.y,1);G.eb=[];G.shake=12;G.flash=8;}
+function startBombFx(){const p=G.p;G.bombFx={t:0,ch:p.ch,x:p.x,y:p.y,pts:[],order:[p.ch]};for(const b of G.eb)coins(b.x,b.y,1);G.eb=[];G.shake=12;G.flash=8;}
 function hurt(){const p=G.p;if(p.inv>0||p.dead)return;p.hp--;p.inv=150;sfx('hurt');G.shake=14;G.flash=6;boom(p.x,p.y,1,'#ffffff');
   for(const b of G.eb)if(dist2(b.x,b.y,p.x,p.y)<120*120)b.dead=1;if(p.pow>1&&R()<.5){p.pow--;G.it.push({x:p.x,y:p.y,vx:2,vy:-2,k:'P',t:0});}
   if(p.hp<=0){p.dead=1;boom(p.x,p.y,2.4);sfx('big');setTimeout(()=>gameOver(),1400);}}
@@ -1786,7 +1786,7 @@ function updBomb(){const f=G.bombFx;f.t++;const p=G.p;
   if(t1>=0&&t1%2==0)for(let i=0;i<5;i++)G.pt.push({x:rnd(0,W),y:rnd(0,H*.6),vx:rnd(-1,1),vy:rnd(-2,0),l:30,m:30,k:'f',s:rnd(14,30)});
   if(t2>=0&&t2%2==0)for(let i=0;i<3;i++)G.sh.push({k:'rain',x:rnd(-100,W-100),y:-20,vx:9,vy:12,dmg:4,r:10,l:60,t:0,pierce:1});
   if(t3>=0&&t3%2==0)for(let i=0;i<5;i++)G.pt.push({x:rnd(0,W),y:H-rnd(0,50),vx:rnd(-.6,.6),vy:-rnd(2,5.5),l:28,m:28,k:'k',c:pick(['#bff6ff','#4fe0c8','#ffffff'])});
-  if(f.t%5==0&&f.t<BOMB_LEN-20){const dmg=19;for(const e of G.en)if(!e.dead&&e.x<W)dmgEnemy(e,dmg*1.6);if(G.boss)for(const q of G.boss.parts)if(!q.dead)dmgPart(G.boss,q,dmg*(q.core?1:.9));
+  if(f.t%5==0&&f.t<BOMB_LEN-20){const dmg=28;for(const e of G.en)if(!e.dead&&e.x<W)dmgEnemy(e,dmg*1.6);if(G.boss)for(const q of G.boss.parts)if(!q.dead)dmgPart(G.boss,q,dmg*(q.core?1:.9));
     for(const b of G.eb)coins(b.x,b.y,1);G.eb=[];}
   if(f.t%3==0)G.shake=5;if(f.t>BOMB_LEN){G.bombFx=null;}}
 
@@ -2132,7 +2132,7 @@ function drawPreview(){
   const t=++PV.t,px=18,py=LH/2+Math.sin(t*.05)*2,tx=LW-16,ty=LH/2+Math.sin(t*.04)*6;
   // 쏘기: 수호자마다 실제 게임과 같은 모양
   if(ch===0&&t%18===1)for(const a of [-.12,0,.12])PV.shots.push({k:'cres',x:px+12,y:py-2,vx:Math.cos(a)*3.4,vy:Math.sin(a)*3.4});
-  if(ch===1&&t%16===1)for(const o of [-5,5])PV.shots.push({k:'tal',x:px+10,y:py+o,vx:2.2,vy:o*.35,home:1});
+  if(ch===1&&t%16===1)for(const o of [-5,5])PV.shots.push({k:'tal',x:px+10,y:py+o,vx:3,vy:o*.04});
   if(ch===2&&t%9===1)PV.shots.push({k:'arr',x:px+14,y:py-1,vx:6,vy:0});
   if(ch===3&&t%14===1)for(const ph of [0,PI])PV.shots.push({k:'wat',x:px+12,y:py,vx:2.8,vy:0,ph,t0:t});
   for(const q of PV.shots){
