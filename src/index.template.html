@@ -56,6 +56,7 @@ html,body{margin:0;height:100%;background:#05060c;color:var(--ink);overflow:hidd
 .btn.on{background:radial-gradient(circle at 40% 35%,rgba(255,170,60,.9),rgba(140,40,10,.85));transform:scale(.94)}
 #bChg{border-color:rgba(69,214,200,.9);background:radial-gradient(circle at 40% 35%,rgba(20,90,100,.75),rgba(5,20,30,.75));color:#bff7f0}
 #bChg.on{background:radial-gradient(circle at 40% 35%,rgba(90,240,220,.9),rgba(10,80,90,.85))}
+#bChg.off{opacity:.45;filter:grayscale(.7)}
 #bPause,#bMute,#bFull{position:absolute;bottom:3%;width:7%;aspect-ratio:1;border-radius:8px;border:1px solid rgba(255,255,255,.35);background:rgba(5,8,20,.55);color:#fff;font:700 13px "Sasin Body","Sasin Hanja",serif;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer}
 #bMute,#bFull{z-index:5;bottom:auto;border-radius:6px;background:rgba(5,8,20,.45);border-color:rgba(255,255,255,.28)}
 #bFull svg{width:56%;height:56%;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
@@ -238,7 +239,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
   <button id="bPause" aria-label="일시정지 (P / Esc)">II<i class="k">P</i></button>
   <button id="bMute" aria-label="소리 (M)" title="소리 켜기·끄기 (M)"><span id="bMuteIcon">♪</span></button>
   <button id="bFull" aria-label="전체화면 (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="bFullPath" d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
-  <button id="bChg" class="btn" aria-label="모아쏘기 (C 길게)"><b>集</b><small>모아쏘기</small><i class="k">C</i></button>
+  <button id="bChg" class="btn" aria-label="수호령 스킬 (C 길게)"><b>護</b><small>수호령 스킬</small><i class="k">C</i></button>
   <button id="bBomb" class="btn" aria-label="사신오의 (X)"><b>奧</b><small>사신오의</small><i class="k">X</i></button>
   <div id="ov"></div>
 </div>
@@ -820,7 +821,7 @@ const CH=[
  {name:'청운',full:'연검객 청운',beast:'청룡',skill:'청룡뇌격',quote:'"하늘이 갈라진다."',color:'#58b8ff',wpn:'검',desc:'초승달 검기를 부채꼴로. 균형형.',spd:3.1,mk:sCheong},
  {name:'연화',full:'방울무녀 연화',beast:'주작',skill:'주작염무',quote:'"불꽃이여, 춤추어라."',color:'#ff7a5a',wpn:'부',desc:'부채꼴로 퍼지는 부적. 넓게 맞힌다.',spd:2.9,mk:sYeon},
  {name:'솔비',full:'매사냥꾼 솔비',beast:'백호',skill:'백호천궁',quote:'"숨 한 번이면 끝나."',color:'#8affc0',wpn:'시',desc:'곧고 빠른 화살. 화력 최강, 범위 좁음.',spd:3.4,mk:sSol},
- {name:'해담',full:'거북선 포수 해담',beast:'현무',skill:'현무수벽',quote:'"한 발짝도 물러서지 않아."',color:'#4fe0c8',wpn:'수',desc:'물결치는 쌍수탄. 모아쏘기는 적탄을 지우는 소용돌이.',spd:2.8,mk:sHae},
+ {name:'해담',full:'거북선 포수 해담',beast:'현무',skill:'현무수벽',quote:'"한 발짝도 물러서지 않아."',color:'#4fe0c8',wpn:'수',desc:'물결치는 쌍수탄. 위아래로 출렁이며 맞힌다.',spd:2.8,mk:sHae},
 ];
 const BOMB_NAME='사신오의',BOMB_HJ='四神奧義';
 const STG=[
@@ -1290,7 +1291,7 @@ const G={state:'title',ch:0,dif:1,t:0,scroll:0,score:0,hi:0,en:[],sh:[],eb:[],co
 try{G.hi=+localStorage.getItem('ssb_hi')||0;}catch(e){}
 const IN={dx:0,dy:0,k:{},chg:false,touch:false};
 
-function newRun(){qzBuild();G.score=0;G.cont=0;G.stage=0;const d=DIF[G.dif];G.p={x:120,y:180,ch:G.ch,hp:d.lives,max:d.lives,bombs:3,pow:1,opt:0,inv:120,ft:0,charge:0,frame:0,trail:[],dead:0};G.dm=d;startStage(0);}
+function newRun(){qzBuild();G.score=0;G.cont=0;G.stage=0;const d=DIF[G.dif];G.p={x:120,y:180,ch:G.ch,hp:d.lives,max:d.lives,bombs:3,pow:1,opt:0,inv:120,ft:0,hold:0,sk:0,cd:0,sp:[],frame:0,trail:[],dead:0};G.dm=d;startStage(0);}
 function startStage(n){G.stage=n;G.en=[];G.sh=[];G.eb=[];G.co=[];G.it=[];G.pt=[];G.pop=[];G.boss=null;G.t=0;G.scroll=0;G.mult=1;G.multT=0;G.phase='intro';G.pt0=0;G.waveI=0;G.wt=0;G.quizPause=false;G.kills=0;G.stCoins=0;
   G.p.x=110;G.p.y=180;G.p.inv=120;G.talk={t:0,txt:LINES[G.ch][n]};BG.s=n;BG.tp=STG[n].tempo;BG.on=true;BG.i=0;G.state='play';showUI();hideOv();}
 
@@ -1342,18 +1343,25 @@ function coins(x,y,n){
 
 /* ================= 플레이어 ================= */
 function addShot(x,y,a,s,k,dmg,o){G.sh.push(Object.assign({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,k,dmg,r:k=='cres'?8:k=='tal'?6:k=='big'?26:k=='bigtal'?10:k=='wat'?6:k=='vort'?24:5,l:120,t:0},o));}
-function playerFire(){const p=G.p,lv=p.pow;if(p.charge>0)return;p.ft++;
+function playerFire(){const p=G.p,lv=p.pow;p.ft++;
   if(p.ch==0&&p.ft%7==0){const n=[1,3,3,5][lv-1],s=[0,.13,.09,.11][lv-1];for(let i=0;i<n;i++)addShot(p.x+18,p.y-4,(i-(n-1)/2)*s,8.5,'cres',lv>2?5:4.5);sfx('shot');}
   if(p.ch==1&&p.ft%8==0){const n=[2,3,4,5][lv-1];for(let i=0;i<n;i++)addShot(p.x+14,p.y-2+(i-(n-1)/2)*6,(i-(n-1)/2)*.12,6,'tal',4.2);sfx('shot');}
   if(p.ch==2&&p.ft%5==0){const n=[1,2,3,3][lv-1];for(let i=0;i<n;i++)addShot(p.x+20,p.y-2+(i-(n-1)/2)*7,(i-(n-1)/2)*(lv>3?.05:.015),12,'arr',lv>3?4.4:3.8);sfx('shot');}
   if(p.ch==3&&p.ft%6==0){const pairs=lv>2?2:1,dmg=lv>3?3.6:lv>1?3:2.6;
     for(let k=0;k<pairs;k++){const a=pairs>1?(k?.07:-.07):0;for(const ph of [0,PI])addShot(p.x+18,p.y-2,a,7.2,'wat',dmg,{ph,wv:lv>1?1.9:1.6});}sfx('shot');}
-  if(p.ft%10==0)for(let i=0;i<p.opt;i++){const o=p.trail[Math.min(p.trail.length-1,(i+1)*10)]||p;addShot(o.x+6,o.y,0,9,'opt',2.4);}}
-function releaseCharge(){const p=G.p;sfxStop(AU.chg);AU.chg=null;if(p.charge<60){p.charge=0;return;}p.charge=0;sfx('rel');G.shake=6;
-  if(p.ch==0)addShot(p.x+20,p.y-4,0,7,'big',3.2,{pierce:1,l:150});
-  if(p.ch==1)for(let i=0;i<10;i++)addShot(p.x,p.y,i/10*TAU,4,'bigtal',9,{home:2,l:160});
-  if(p.ch==2)G.sh.push({k:'beam',x:p.x+20,y:p.y-2,l:34,t:0,dmg:2.6,r:9,pierce:1});
-  if(p.ch==3)addShot(p.x+24,p.y-2,0,3.4,'vort',1.5,{pierce:1,l:190});}
+  if(p.ft%10==0&&!p.sk)for(let i=0;i<p.opt;i++){const o=p.sp[i]||p;addShot(o.x+6,o.y,0,9,'opt',2.4);}}
+// Spirit skill: with a spirit, hold C (or the 護 button) for SPK.hold ticks. For SPK.len ticks the
+// spirits circle the guardian, eat enemy bullets they touch and fire homing shots; then SPK.cd ticks of rest.
+const SPK={hold:30,len:120,cd:480};
+function spiritSkill(){const p=G.p;p.hold=0;sfxStop(AU.chg);AU.chg=null;sfx('rel');p.sk=SPK.len;p.cd=SPK.len+SPK.cd;G.shake=4;pop(p.x,p.y-30,'수호령 진!','#c8ffb0',14);}
+// Spirits keep their own place beside the guardian (above and below) so they never hide behind it.
+function updSpirits(p){
+  for(let i=0;i<p.opt;i++){const q=p.sp[i]||(p.sp[i]={x:p.x-22,y:p.y});let tx,ty,k;
+    if(p.sk>0){const an=G.t*.13+i*PI;tx=p.x+Math.cos(an)*44;ty=p.y+Math.sin(an)*44;k=.35;}
+    else{tx=p.x-22;ty=p.y+(i?36:-36);k=.16;}
+    q.x+=(tx-q.x)*k;q.y+=(cl(ty,12,H-12)-q.y)*k;
+    if(p.sk>0){for(const b of G.eb)if(!b.dead&&dist2(b.x,b.y,q.x,q.y)<20*20){b.dead=1;coins(b.x,b.y,1);}
+      if(p.sk%6==i*3)addShot(q.x,q.y,0,7,'opt',3,{home:2,l:90});}}}
 function doBomb(){const p=G.p;if(G.state!='play'||G.quizPause||p.bombs<=0||G.cut||G.bombFx||p.dead)return;p.bombs--;G.cut={t:0,ch:p.ch};p.inv=Math.max(p.inv,260);sfx('bomb');}
 // 사신오의: 고른 수호자의 신수 하나만 나온다.
 const BEAST_SPD=.65,BEAST_LEN=154,BOMB_LEN=BEAST_LEN+20,BEAST_GAP=20;   // BEAST_SPD < 1 slows the beast crossing
@@ -1498,13 +1506,17 @@ function update(){
   if(G.phase=='clear'&&G.t-G.pt0>150){stageClear();return;}
   // 플레이어
   if(!p.dead){
-    let mx=IN.dx,my=IN.dy;IN.dx=0;IN.dy=0;const sp2=CH[p.ch].spd*(p.charge>0?.55:1);
+    let mx=IN.dx,my=IN.dy;IN.dx=0;IN.dy=0;const sp2=CH[p.ch].spd;
     let kx=(IN.k.ArrowRight||IN.k.KeyD?1:0)-(IN.k.ArrowLeft||IN.k.KeyA?1:0),ky=(IN.k.ArrowDown||IN.k.KeyS?1:0)-(IN.k.ArrowUp||IN.k.KeyW?1:0);
     if(kx&&ky){kx*=.7071;ky*=.7071;}mx+=kx*sp2;my+=ky*sp2;
     p.x=cl(p.x+mx,18,W-24);p.y=cl(p.y+my,24,G.stage<2?300:H-18);p.frame++;
     p.trail.unshift({x:p.x,y:p.y});if(p.trail.length>40)p.trail.pop();
     if(p.inv)p.inv--;
-    if(IN.chg||IN.k.KeyC){if(p.charge<60){if(p.charge==0)AU.chg=sfx('chg');p.charge++;}else p.charge=60;if(p.charge<2)p.charge=2;}else if(p.charge>0)releaseCharge();
+    const press=IN.chg||IN.k.KeyC;if(p.cd>0)p.cd--;if(p.sk>0)p.sk--;
+    if(press&&p.opt>0&&!p.cd){if(!p.hold)AU.chg=sfx('chg');if(++p.hold>=SPK.hold)spiritSkill();}
+    else if(p.hold){p.hold=0;sfxStop(AU.chg);AU.chg=null;}
+    if(press&&!p.opt&&!p.nope){p.nope=1;pop(p.x,p.y-30,'수호령이 없어요 (護 아이템)','#c8ffb0',11);}if(!press)p.nope=0;
+    updSpirits(p);
     if(G.phase!='clear')playerFire();
   }
   // 샷
@@ -1622,10 +1634,10 @@ function drawWorld(){const p=G.p;
   for(const c of G.co)ds(A.coin[((c.t>>2)+c.f)&3],c.x,c.y,1.6);
   // 플레이어
   if(!p.dead){
-    for(let i=0;i<p.opt;i++){const o=p.trail[Math.min(p.trail.length-1,(i+1)*10)]||p;X.globalCompositeOperation='lighter';dg(A.gG,o.x,o.y,26+Math.sin(G.t*.2)*4);X.globalCompositeOperation='source-over';ds(fr('spirit',G.t,i*3),o.x,o.y+Math.sin(G.t*.12+i*2)*1.5,1);}
     if(!(p.inv>0&&(p.inv>>2)%2)){ds(fr('hero'+p.ch,G.t),p.x,p.y,2);}
-    if(p.charge>0){const k=p.charge/60;X.strokeStyle=k>=1?'#fff27a':'rgba(160,240,255,.9)';X.lineWidth=2;X.beginPath();X.arc(p.x,p.y,28,-PI/2,-PI/2+TAU*k);X.stroke();
-      X.globalCompositeOperation='lighter';dg(A.gC,p.x+20,p.y-4,12+k*30+(k>=1?Math.sin(G.t*.5)*6:0));X.globalCompositeOperation='source-over';}
+    if(p.sk>0){X.globalCompositeOperation='lighter';X.globalAlpha=.35+Math.sin(G.t*.4)*.1;X.strokeStyle='#9aff7a';X.lineWidth=3;X.beginPath();X.arc(p.x,p.y,44,0,TAU);X.stroke();X.globalAlpha=1;X.globalCompositeOperation='source-over';}
+    for(let i=0;i<p.opt;i++){const o=p.sp[i]||p,yy=o.y+Math.sin(G.t*.12+i*2)*1.5;X.globalCompositeOperation='lighter';dg(A.gG,o.x,yy,(p.sk>0?44:32)+Math.sin(G.t*.2)*4);X.globalCompositeOperation='source-over';ds(fr('spirit',G.t,i*3),o.x,yy,1.5);}
+    if(p.hold>0){const k=p.hold/SPK.hold;X.strokeStyle='rgba(170,255,150,.95)';X.lineWidth=2;X.beginPath();X.arc(p.x,p.y,30,-PI/2,-PI/2+TAU*k);X.stroke();}
     X.fillStyle='#ffffff';X.beginPath();X.arc(p.x,p.y,2.6+PLAYER_HIT_PADDING,0,TAU);X.fill();X.strokeStyle='#ff3a5a';X.lineWidth=1;X.stroke();}
   // 샷
   X.globalCompositeOperation='lighter';
@@ -1812,7 +1824,9 @@ function drawHUD(){const p=G.p,ch=CH[p.ch];
   X.fillStyle='#000';X.fillRect(11,11,42,42);porDraw(p.ch,11,11,42);X.strokeStyle=ch.color;X.strokeRect(11,11,42,42);
   txt(ch.name,58,18,13,'#ffffff');for(let i=0;i<p.max;i++)txt('♥',92+i*12,18,12,i<p.hp?'#ff3a5a':'#3a3a4a','left',HF,'#000',2);
   X.fillStyle='rgba(0,0,0,.5)';X.fillRect(150,11,64,14);txt('['+ch.wpn+'] '+p.pow+'단계',182,18,10,'#9af8ff','center');
-  txt(p.charge>=60?'모아쏘기 완료!':'모아쏘기',58,32,9,p.charge>=60?'#fff27a':'#cfd8ff');bar(118,29,96,6,p.charge/60,p.charge>=60?'#fff27a':'#45d6c8');
+  {const rdy=p.opt>0&&!p.cd,v=!p.opt?0:p.sk>0?p.sk/SPK.len:p.cd?1-p.cd/(SPK.len+SPK.cd):1;
+  txt(!p.opt?'수호령 없음':p.sk>0?'수호령 진!':rdy?'수호령 준비':'수호령 쉬는 중',58,32,9,!p.opt?'#7f8799':rdy||p.sk?'#c8ffb0':'#cfd8ff');bar(124,29,90,6,v,p.sk>0?'#fff27a':rdy?'#9aff7a':'#45d6c8');
+  bC.classList.toggle('off',!rdy);}
   txt('오의',58,46,9,'#ffb0a0');for(let i=0;i<5;i++){X.fillStyle=i<p.bombs?'#d8352a':'rgba(255,255,255,.12)';X.beginPath();X.arc(88+i*13,46,5,0,TAU);X.fill();if(i<p.bombs){txt('奧',88+i*13,46.5,7,'#ffe9a8','center','"Sasin Hanja",serif',null);}}
   txt('수호 '+p.opt,160,46,9,'#c8ffb0');
   X.save();X.translate(-30,0);
