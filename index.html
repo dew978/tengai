@@ -44,6 +44,7 @@ html,body{margin:0;height:100%;background:#05060c;color:var(--ink);overflow:hidd
 .title-heading h1{margin:0;padding:0 .06em;font:400 clamp(64px,20vh,220px)/1 "Sasin Title","Sasin Hanja","Sasin Body",serif;letter-spacing:.06em;color:#ffe7b0;background:linear-gradient(180deg,#fff8de 0%,#ffe08e 42%,#e0a443 70%,#a8641f 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 0 #5a2a18) drop-shadow(0 4px 0 #1a0f14) drop-shadow(0 10px 26px #05081a)}
 .title-seal{display:inline-block;padding:2px 8px;border:1px solid #f0a977;background:#803842;color:#ffe8bd;font:700 clamp(12px,2.3vh,22px)/1.25 "Sasin Body","Sasin Hanja",serif;letter-spacing:.18em}
 .title-sub{margin-top:4px;color:#fff3d6;font:700 clamp(13px,2.6vh,20px)/1.2 "Sasin Body","Sasin Hanja",serif;text-shadow:0 2px 6px #0a0d22}
+.title-credit{position:absolute;left:0;right:0;bottom:max(10px,env(safe-area-inset-bottom));margin:0;color:#fff3d6cc;font:700 clamp(11px,2.1vh,16px)/1.2 "Sasin Body","Sasin Hanja",serif;letter-spacing:.12em;text-shadow:0 1px 4px #0a0d22,0 0 2px #0a0d22;pointer-events:none}
 .title-actions{position:absolute;left:0;right:0;top:56%;transform:translateY(-23px);display:grid;justify-items:center;gap:8px}
 #startGame{min-width:146px;min-height:46px;padding:8px 25px;border-radius:3px;border-color:#ffd990;box-shadow:0 0 0 3px #201827,0 0 28px #de89594f;font-size:clamp(18px,3vh,24px)}
 #titleBest{color:#ffddb0;text-shadow:0 2px 4px #090c1c;font-size:13px}
@@ -251,6 +252,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
     <button class="mb" id="startGame" type="button">게임 시작<kbd>Enter</kbd></button>
     <span id="titleBest"></span>
   </div>
+  <p class="title-credit">삼대710 제작</p>
 </section>
 <section id="story" hidden aria-label="이야기">
   <img alt=""><img alt="">
