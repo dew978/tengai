@@ -1046,6 +1046,9 @@ async function loadCombatArt(){
   damage.fillRect(0,0,A.dokB.width,A.dokB.height);
   A.scenery=[0,1,2].map(i=>illustrations['stage'+i]);
   A.pl.forEach((f,i)=>A['hero'+i]=f);
+  // Spirit-skill seal (one per guardian: art/seal0-3.webp) and the hitbox jewel (art/core.webp)
+  const pre=(im,n)=>{if(!im)return null;const c=cnv(n,n);fitDraw(c.getContext('2d'),im,0,0,n,n);return c;};
+  A.seal=[0,1,2,3].map(i=>pre(illustrations['seal'+i],384));A.core=pre(illustrations.core,64);
   return illustrations;
 }
 const POR_SCALE=7;
@@ -1634,11 +1637,17 @@ function drawWorld(){const p=G.p;
   for(const c of G.co)ds(A.coin[((c.t>>2)+c.f)&3],c.x,c.y,1.6);
   // 플레이어
   if(!p.dead){
+    if(p.sk>0&&A.seal&&A.seal[p.ch]){const k=Math.min(1,(SPK.len-p.sk)/8),out=Math.min(1,p.sk/20),d=96*(.8+.2*k);
+      X.globalCompositeOperation='lighter';X.globalAlpha=.5*out;dg([A.gC,A.gR,A.gW,A.gT][p.ch],p.x,p.y,d*1.25);X.globalCompositeOperation='source-over';
+      X.save();X.translate(p.x,p.y);X.rotate(G.t*.03);X.globalAlpha=(.72+Math.sin(G.t*.3)*.08)*out;X.drawImage(A.seal[p.ch],-d/2,-d/2,d,d);X.restore();X.globalAlpha=1;}
+    // holding: the seal draws itself in clockwise
+    if(p.hold>0&&A.seal&&A.seal[p.ch]){const k=p.hold/SPK.hold,d=72+k*12;X.save();X.translate(p.x,p.y);X.beginPath();X.moveTo(0,0);X.arc(0,0,d,-PI/2,-PI/2+TAU*k);X.closePath();X.clip();
+      X.rotate(-k*.6);X.globalAlpha=.55+k*.3;X.drawImage(A.seal[p.ch],-d/2,-d/2,d,d);X.restore();X.globalAlpha=1;}
     if(!(p.inv>0&&(p.inv>>2)%2)){ds(fr('hero'+p.ch,G.t),p.x,p.y,2);}
-    if(p.sk>0){X.globalCompositeOperation='lighter';X.globalAlpha=.35+Math.sin(G.t*.4)*.1;X.strokeStyle='#9aff7a';X.lineWidth=3;X.beginPath();X.arc(p.x,p.y,44,0,TAU);X.stroke();X.globalAlpha=1;X.globalCompositeOperation='source-over';}
     for(let i=0;i<p.opt;i++){const o=p.sp[i]||p,yy=o.y+Math.sin(G.t*.12+i*2)*1.5;X.globalCompositeOperation='lighter';dg(A.gG,o.x,yy,(p.sk>0?44:32)+Math.sin(G.t*.2)*4);X.globalCompositeOperation='source-over';ds(fr('spirit',G.t,i*3),o.x,yy,1.5);}
-    if(p.hold>0){const k=p.hold/SPK.hold;X.strokeStyle='rgba(170,255,150,.95)';X.lineWidth=2;X.beginPath();X.arc(p.x,p.y,30,-PI/2,-PI/2+TAU*k);X.stroke();}
-    X.fillStyle='#ffffff';X.beginPath();X.arc(p.x,p.y,2.6+PLAYER_HIT_PADDING,0,TAU);X.fill();X.strokeStyle='#ff3a5a';X.lineWidth=1;X.stroke();}
+    {let nd=1e9;for(const b of G.eb)if(!b.dead){const d=dist2(b.x,b.y,p.x,p.y);if(d<nd)nd=d;}for(const e of G.en)if(!e.dead){const d=dist2(e.x,e.y,p.x,p.y)/4;if(d<nd)nd=d;}
+      const want=cl((110-Math.sqrt(nd))/60,0,1);p.hbA=(p.hbA||0)+(want-(p.hbA||0))*.2;
+      if(p.hbA>.02&&A.core){X.globalAlpha=p.hbA;X.globalCompositeOperation='lighter';dg(A.gR,p.x,p.y,16);X.globalCompositeOperation='source-over';dg(A.core,p.x,p.y,12);X.globalAlpha=1;}}}
   // 샷
   X.globalCompositeOperation='lighter';
   for(const s of G.sh){
