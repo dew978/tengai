@@ -2,7 +2,7 @@
 
 달을 삼키려는 흑철 요괴군에 맞서는 모바일 횡스크롤 슈팅 게임이자, 초등 5·6학년 복습 게임입니다.
 90년대 오락실 슈팅(텐가이)을 참고했고, 조선 판타지에 증기기관 분위기를 섞었습니다.
-캐릭터·적·보스·배경·발사체는 고해상도 일러스트(`art/`)를 쓰고, 화면은 기기 해상도에 맞춰 선명하게 그립니다. 효과음은 Web Audio로 생성합니다.
+캐릭터·적·보스·배경·발사체는 고해상도 일러스트(`art/`)를 쓰고, 화면은 기기 해상도에 맞춰 선명하게 그립니다. 배경음(타이틀·스테이지·보스)과 효과음은 로컬 생성 모델(Stable Audio 3 Medium)로 만든 소리를 `audio/`에 담아 씁니다.
 
 ## 실행
 
@@ -68,6 +68,7 @@
 - 코드: `src/index.template.html`
 - 문제: `src/questions.js` (한 줄에 한 문제: 과목, 학년, 문제, 정답, 오답 3개, 해설, 성취기준)
 - 그림: `art/*.webp` (파일 이름이 곧 그림 키)
+- 소리: `audio/*.mp3` — `bgm_title`·`bgm_stage`·`bgm_boss`는 반복 재생 배경음(앞 0.5초 + 고리 + 뒤 1초로 저장, 고리 길이는 코드의 `MUS`), 나머지는 효과음(크기는 `VOL`). 수호자마다 발사음이 다릅니다(`shot0`~`shot3`).
 - 글꼴: `fonts/*.woff` — 제목 송명(Song Myung), 본문 고운바탕(Gowun Batang), 한자 Noto Serif KR. 모두 SIL OFL 1.1이며 게임에 쓰는 글자만 담았습니다(`fonts/LICENSE.txt`). 문구나 문제를 바꿔 새 글자가 생기면 `node tools/subset-fonts.js`로 다시 만듭니다(fonttools 필요, 빌드가 알려 줌).
 - 빌드: `node tools/build.js` → `index.html` 생성
 - 오프라인 압축본: 빌드한 `index.html`을 `Sasin-Flight.html`로 이름을 바꿔 `Sasin-Flight.zip`에 다시 묶습니다.
