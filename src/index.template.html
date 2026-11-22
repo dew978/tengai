@@ -39,12 +39,12 @@ html,body{margin:0;height:100%;background:#05060c;color:var(--ink);overflow:hidd
 #titleScreen{position:fixed;inset:0;z-index:4;display:grid;grid-template-rows:1fr auto auto;align-items:end;justify-items:center;padding:clamp(16px,4.4vh,48px) 16px;overflow:hidden;isolation:isolate;background:#111a31;text-align:center}
 #titleScreen::before,#titleScreen::after{content:"";position:absolute;inset:0;pointer-events:none}
 #titleScreen::before{z-index:-2;background:url("__TITLE_IMAGE__") center 49%/cover no-repeat}
-#titleScreen::after{z-index:-1;background:linear-gradient(180deg,#0b102b8c 0%,transparent 20%,transparent 40%,#0a10278c 62%,#070b1ced 100%)}
-.title-heading{grid-row:2;align-self:end;display:grid;justify-items:center;gap:4px}
+#titleScreen::after{z-index:-1;background:linear-gradient(180deg,#0b102bb3 0%,#0b102b59 34%,transparent 52%,transparent 80%,#0a102766 100%)}
+.title-heading{position:absolute;left:0;right:0;top:11%;display:grid;justify-items:center;gap:4px}
 .title-heading h1{margin:0;padding:0 .06em;font:400 clamp(64px,20vh,220px)/1 "Sasin Title","Sasin Hanja","Sasin Body",serif;letter-spacing:.06em;color:#ffe7b0;background:linear-gradient(180deg,#fff8de 0%,#ffe08e 42%,#e0a443 70%,#a8641f 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 2px 0 #5a2a18) drop-shadow(0 4px 0 #1a0f14) drop-shadow(0 10px 26px #05081a)}
 .title-seal{display:inline-block;padding:2px 8px;border:1px solid #f0a977;background:#803842;color:#ffe8bd;font:700 clamp(12px,2.3vh,22px)/1.25 "Sasin Body","Sasin Hanja",serif;letter-spacing:.18em}
 .title-sub{margin-top:4px;color:#fff3d6;font:700 clamp(13px,2.6vh,20px)/1.2 "Sasin Body","Sasin Hanja",serif;text-shadow:0 2px 6px #0a0d22}
-.title-actions{grid-row:3;display:grid;justify-items:center;gap:8px;margin-top:clamp(10px,2.4vh,24px)}
+.title-actions{position:absolute;left:0;right:0;top:56%;transform:translateY(-23px);display:grid;justify-items:center;gap:8px}
 #startGame{min-width:146px;min-height:46px;padding:8px 25px;border-radius:3px;border-color:#ffd990;box-shadow:0 0 0 3px #201827,0 0 28px #de89594f;font-size:clamp(18px,3vh,24px)}
 #titleBest{color:#ffddb0;text-shadow:0 2px 4px #090c1c;font-size:13px}
 #st{position:absolute;pointer-events:none}
