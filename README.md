@@ -22,6 +22,7 @@
 | 소리 켜고 끄기 | ♪ 버튼 | M |
 | 전체화면 | ⛶ 버튼 | F |
 | 메뉴 결정 · 다음 | 버튼 누르기 | Enter / Space / Z |
+| 이야기 넘기기 · 건너뛰기 | 화면 누르기 · 건너뛰기 | Enter · Esc |
 | 메뉴 취소 · 건너뛰기 | 버튼 누르기 | Esc |
 | 수호자 · 난이도 고르기 | 카드 · 버튼 누르기 | ←→ 또는 1~4 · ↑↓ |
 | 복습 학년 · 과목 고르기 | 버튼 누르기 | ←→ · 1~5 |
@@ -29,6 +30,10 @@
 | 처음으로(틀린 문제 먼저 풀기) | 버튼 누르기 | Enter |
 
 키보드는 물리 키 위치로 인식하므로 한글 입력 상태에서도 그대로 동작합니다.
+
+## 시작 흐름
+
+게임 시작 → 이야기 컷신(5장면, 건너뛸 수 있음) → 수호자 선택 → 복습 범위 → 출격
 
 ## 복습 방식
 
@@ -64,5 +69,6 @@
 - 코드: `src/index.template.html`
 - 문제: `src/questions.js` (한 줄에 한 문제: 과목, 학년, 문제, 정답, 오답 3개, 해설, 성취기준)
 - 그림: `art/*.webp` (파일 이름이 곧 그림 키)
+- 글꼴: `fonts/*.woff` — 제목 송명(Song Myung), 본문 고운바탕(Gowun Batang), 한자 Noto Serif KR. 모두 SIL OFL 1.1이며 게임에 쓰는 글자만 담았습니다(`fonts/LICENSE.txt`). 문구나 문제를 바꿔 새 글자가 생기면 `node tools/subset-fonts.js`로 다시 만듭니다(fonttools 필요, 빌드가 알려 줌).
 - 빌드: `node tools/build.js` → `index.html` 생성
 - 오프라인 압축본: 빌드한 `index.html`을 `Sasin-Flight.html`로 이름을 바꿔 `Sasin-Flight.zip`에 다시 묶습니다.
