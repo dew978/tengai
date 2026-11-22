@@ -68,7 +68,7 @@
 
 - 코드: `src/index.template.html`
 - 문제: `src/questions.js` (한 줄에 한 문제: 과목, 학년, 문제, 정답, 오답 3개, 해설, 성취기준)
-- 그림: `art/*.webp` (파일 이름이 곧 그림 키) — 수호령 스킬 인장 `skring`과 피격 구슬 `core`는 로컬 FLUX.2 Klein 4B로 그렸습니다.
+- 그림: `art/*.webp` (파일 이름이 곧 그림 키) — 수호자마다 다른 수호령 인장 `seal0`~`seal3`(청룡·주작·백호·현무)과 피격 구슬 `core`는 로컬 FLUX.2 Klein 4B로 그렸습니다.
 - 움직임: 코드의 `RIG`가 그림마다 움직일 부위(날개·천·술·몸통)를 0~1 좌표로 정합니다. 게임이 열린 뒤 이 정보로 6장씩 만들어 씁니다.
 - 소리: `audio/*.mp3` — `bgm_title`·`bgm_stage`·`bgm_boss`는 반복 재생 배경음(앞 0.5초 + 고리 + 뒤 1초로 저장, 고리 길이는 코드의 `MUS`), 나머지는 효과음(크기는 `VOL`). 수호자마다 발사음이 다릅니다(`shot0`~`shot3`).
 - 글꼴: `fonts/*.woff` — 제목 송명(Song Myung), 본문 고운바탕(Gowun Batang), 한자 Noto Serif KR. 모두 SIL OFL 1.1이며 게임에 쓰는 글자만 담았습니다(`fonts/LICENSE.txt`). 문구나 문제를 바꿔 새 글자가 생기면 `node tools/subset-fonts.js`로 다시 만듭니다(fonttools 필요, 빌드가 알려 줌).
