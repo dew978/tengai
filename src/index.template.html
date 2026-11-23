@@ -833,14 +833,19 @@ const STG=[
  {name:'월하죽림',hj:'月下竹林',boss:'흑각귀 철갑거',bossHj:'黑角鬼',tempo:144},
  {name:'적염제련소',hj:'赤炎製鍊所',boss:'백족철왕',bossHj:'百足鐵王',tempo:156},
  {name:'노을운해',hj:'夕陽雲海',boss:'묵린 흑룡함',bossHj:'墨鱗黑龍艦',tempo:150},
+ {name:'북해빙궁',hj:'北海氷宮',boss:'설한 구미호',bossHj:'雪寒九尾狐',tempo:150,ground:1},
+ {name:'흑월천궁',hj:'黑月天宮',boss:'흑철요왕',bossHj:'黑鐵妖王',tempo:160,ground:1},
 ];
+STG[0].ground=STG[1].ground=1;   // ground stages: a walkway at the bottom, ground cannons, player kept above it
 const LINES=[
- ['요괴 기계가 대숲을 덮었군. 단숨에 벤다.','쇳덩이 너머로 달빛이 울고 있어.','저 함대만 떨어뜨리면 끝이다.'],
- ['방울 소리가 들리면, 이미 늦은 거예요.','불의 땅이라… 주작이 기뻐하겠네요.','하늘의 원한, 제가 거둘게요.'],
- ['바람 좋다. 매야, 높이 날자.','연기 때문에 눈이 따갑네. 빨리 끝내자.','저 큰 배, 화살 한 대면 충분해.'],
- ['거북아, 북쪽 바다의 힘을 빌려줘.','불바다라도 물길은 열린다.','배와 배의 싸움이라면, 거북선이 질 리 없지.'],
+ ['요괴 기계가 대숲을 덮었군. 단숨에 벤다.','쇳덩이 너머로 달빛이 울고 있어.','저 함대를 넘어야 달로 가는 길이 열린다.','얼음 바다라… 검이 더 날카로워지는군.','달을 삼키려는 자, 내 검이 먼저다.'],
+ ['방울 소리가 들리면, 이미 늦은 거예요.','불의 땅이라… 주작이 기뻐하겠네요.','하늘의 원한, 제가 거둘게요.','차가운 바람… 불꽃이 더 밝게 빛나겠어요.','달님, 조금만 기다려요. 곧 구해 드릴게요.'],
+ ['바람 좋다. 매야, 높이 날자.','연기 때문에 눈이 따갑네. 빨리 끝내자.','저 큰 배, 화살 한 대면 충분해.','눈보라 속에서도 과녁은 보여.','마지막 한 발. 달까지 닿게 쏜다.'],
+ ['거북아, 북쪽 바다의 힘을 빌려줘.','불바다라도 물길은 열린다.','배와 배의 싸움이라면, 거북선이 질 리 없지.','북쪽 바다는 현무의 고향이야. 길을 비켜!','하늘 끝이라도 거북선은 간다.'],
 ];
-const DIF=[{n:'쉬움',hp:.75,bs:.8,fr:1.35,lives:5},{n:'보통',hp:1,bs:1,fr:1,lives:4},{n:'어려움',hp:1.3,bs:1.22,fr:.72,lives:3}];
+// ramp: each later stage adds this much enemy toughness and fire rate (easy stays flat)
+const DIF=[{n:'쉬움',hp:.75,bs:.8,fr:1.35,lives:5,ramp:0},{n:'보통',hp:1.2,bs:1.12,fr:.82,lives:4,ramp:.07},{n:'어려움',hp:1.55,bs:1.32,fr:.6,lives:3,ramp:.1}];
+function stageDm(n){const d=DIF[G.dif],k=1+n*d.ramp;return {...d,hp:d.hp*k,bs:d.bs*(1+n*d.ramp*.6),fr:d.fr/k};}
 
 /* ================= 복습 문제 ================= */
 const SUBJ=['수학','국어','사회','과학','영어'];
@@ -1036,9 +1041,9 @@ async function loadCombatArt(){
     c.logicalWidth=150;c.logicalHeight=90;c.ps=q;
     return c;
   });
-  for(const key of ['df','bt','bat','ln','sup','can','ket','junk','phx'])
+  for(const key of ['df','bt','bat','ln','sup','can','ket','junk','phx','ice','oni'])
     A[key]=A[key].map((old,f)=>sprite(key,old,f));
-  for(const key of ['dok','chead','ship','dhead','tiger','turtle','cres','tal','arr','barrel','tur','drg','drgO','water','spirit'])A[key]=sprite(key,A[key]);
+  for(const key of ['dok','chead','ship','dhead','tiger','turtle','cres','tal','arr','barrel','tur','drg','drgO','water','spirit','fox','tail','king','fist'])A[key]=sprite(key,A[key]);
   A.club=sprite('club',{width:86,height:26});
   A.cseg=A.cseg.map((old,f)=>sprite('cseg',old,f));
   A.coin=A.coin.map((old,f)=>sprite('coin',old,0,[1,.7,.25,.7][f]));
@@ -1049,7 +1054,7 @@ async function loadCombatArt(){
   damage.globalCompositeOperation='source-atop';
   damage.fillStyle='rgba(177,53,26,.27)';
   damage.fillRect(0,0,A.dokB.width,A.dokB.height);
-  A.scenery=[0,1,2].map(i=>illustrations['stage'+i]);
+  A.scenery=STG.map((_,i)=>illustrations['stage'+i]);
   A.pl.forEach((f,i)=>A['hero'+i]=f);
   // Spirit-skill seal (one per guardian: art/seal0-3.webp) and the hitbox jewel (art/core.webp)
   const pre=(im,n)=>{if(!im)return null;const c=cnv(n,n);fitDraw(c.getContext('2d'),im,0,0,n,n);return c;};
@@ -1164,6 +1169,22 @@ const RIG={
     {k:'f',r:[0,.55,1,1],o:1,d:-1,a:.025,n:2.2},
     {k:'f',r:[0,.05,.3,.55],o:.3,d:-1,a:.037,n:1.5,p:1},
     {k:'b',r:[.44,0,1,.34],y:.022,p:2}]},
+  ice:{sp:.2,p:[
+    {k:'f',r:[.5,0,1,1],o:.5,d:1,a:.05,n:1.3},
+    {k:'b',r:[-.5,-.5,1.5,1.5],y:.03,e:0}]},
+  oni:{sp:.3,p:[
+    {k:'z',r:[0,.45,.24,.85],c:[.1,.65],a:.35,y:1},
+    {k:'b',r:[-.5,-.5,1.5,1.5],y:.025,e:0,p:1}]},
+  fox:{sp:.14,p:[
+    {k:'f',r:[0,.3,.22,.62],o:.22,d:-1,a:.06,n:1.4},
+    {k:'f',r:[.62,0,1,.45],o:.62,d:1,a:.03,n:1},
+    {k:'z',r:[-.5,-.5,1.5,1.5],c:[.5,.6],a:.012,e:0}]},
+  tail:{sp:.16,p:[
+    {k:'f',r:[0,0,1,1],o:1,d:-1,a:.03,n:.8}]},
+  king:{sp:.12,p:[
+    {k:'f',r:[0,.3,.28,1],o:.28,d:-1,a:.05,n:1},
+    {k:'f',r:[.72,.3,1,1],o:.72,d:1,a:.05,n:1,p:1},
+    {k:'z',r:[-.5,-.5,1.5,1.5],c:[.5,.55],a:.012,e:0}]},
   spirit:{sp:.18,p:[
     {k:'f',r:[0,0,.46,1],o:.46,d:-1,a:.075,n:1.3},
     {k:'b',r:[.4,.2,.95,.95],y:.02,p:1}]}
@@ -1244,6 +1265,8 @@ function buildAssets(){
   A.gT=glow(24,'#f0ffff','#4fe0c8','rgba(0,90,140,0)');
   // 원화가 아직 없을 때 쓰는 대체 그림(원화 로드 후 교체됨)
   A.water=spr(22,12,g=>{E(g,13,6,6,5,'#3fb8d8');E(g,14,5,3,2.5,'#e0ffff');E(g,5,6,4,2,'#2a7ab0');},{ol:'#0a3050'});
+  // stage 4-5 enemies and bosses: blank stand-ins until their pictures load
+  {const blank=(w,h)=>spr(w,h,()=>{});A.ice=[blank(28,30),blank(28,30)];A.oni=[blank(34,33),blank(34,33)];A.fox=blank(90,91);A.tail=blank(50,48);A.king=blank(90,97);A.fist=blank(40,40);}
   A.spirit=spr(14,14,g=>{E(g,7,7,5,5,'#8affb0');E(g,7,6,2.4,2.4,'#f0fff0');});
   A.turtle=spr(64,40,g=>{E(g,30,22,22,12,'#1d3a40');E(g,30,19,17,9,'#2c6a6a');E(g,56,20,6,4,'#3fb8a0');E(g,58,19,1,1,'#ffffff');});
   const orb=(c1,c2)=>spr(12,12,g=>{E(g,6,6,5,5,c1);E(g,6,6,2.4,2.4,c2);});
@@ -1300,11 +1323,11 @@ try{G.hi=+localStorage.getItem('ssb_hi')||0;}catch(e){}
 const IN={dx:0,dy:0,k:{},chg:false,touch:false};
 
 function newRun(){qzBuild();G.score=0;G.cont=0;G.stage=0;const d=DIF[G.dif];G.p={x:120,y:180,ch:G.ch,hp:d.lives,max:d.lives,bombs:3,pow:1,opt:0,inv:120,ft:0,hold:0,sk:0,cd:0,sp:[],frame:0,trail:[],dead:0};G.dm=d;startStage(0);}
-function startStage(n){G.stage=n;G.en=[];G.sh=[];G.eb=[];G.co=[];G.it=[];G.pt=[];G.pop=[];G.boss=null;G.t=0;G.scroll=0;G.mult=1;G.multT=0;G.phase='intro';G.pt0=0;G.waveI=0;G.wt=0;G.quizPause=false;G.kills=0;G.stCoins=0;
+function startStage(n){G.stage=n;G.dm=stageDm(n);G.en=[];G.sh=[];G.eb=[];G.co=[];G.it=[];G.pt=[];G.pop=[];G.boss=null;G.t=0;G.scroll=0;G.mult=1;G.multT=0;G.phase='intro';G.pt0=0;G.waveI=0;G.wt=0;G.quizPause=false;G.kills=0;G.stCoins=0;
   G.p.x=110;G.p.y=180;G.p.inv=120;G.talk={t:0,txt:LINES[G.ch][n]};BG.s=n;BG.tp=STG[n].tempo;BG.on=true;BG.i=0;G.state='play';showUI();hideOv();}
 
 /* ================= 생성 ================= */
-const ET={df:{hp:5,r:9,sc:100,co:3},bt:{hp:60,r:15,sc:600,co:12},ln:{hp:55,r:13,sc:450,co:9},sup:{hp:20,r:13,sc:300,co:6},bat:{hp:12,r:12,sc:200,co:4},can:{hp:28,r:12,sc:300,co:6},ket:{hp:26,r:12,sc:300,co:6},junk:{hp:150,r:24,sc:1500,co:18}};
+const ET={df:{hp:5,r:9,sc:100,co:3},bt:{hp:60,r:15,sc:600,co:12},ln:{hp:55,r:13,sc:450,co:9},sup:{hp:20,r:13,sc:300,co:6},bat:{hp:12,r:12,sc:200,co:4},can:{hp:28,r:12,sc:300,co:6},ket:{hp:26,r:12,sc:300,co:6},junk:{hp:150,r:24,sc:1500,co:18},ice:{hp:30,r:12,sc:350,co:6},oni:{hp:42,r:14,sc:450,co:8}};
 function sp(type,x,y,o){const d=ET[type];const e=Object.assign({type,x,y,vx:-2,vy:0,hp:d.hp*G.dm.hp,r:d.r,t:0,id:++G.eid,fl:0,mv:'line',ft:ri(30,90)},o);e.max=e.hp;e.y0=e.y;G.en.push(e);return e;}
 function dly(n,f,gap){for(let i=0;i<n;i++)G.q.push({t:G.t+i*gap,f:()=>f(i)});}
 const WAVES={
@@ -1315,14 +1338,18 @@ const WAVES={
  lantern:()=>{sp('ln',W+20,rnd(70,250),{mv:'stop',tx:rnd(440,560),ty:rnd(70,250),st:60,stay:150});},
  supply:()=>{sp('sup',W+20,rnd(80,220),{mv:'sine',vx:-1.3,amp:30,fq:.03,ph:0,drop:pick(['P','P','B','O','H','P'])});},
  bats:()=>{dly(4,i=>sp('bat',W+20,i%2?30:310,{mv:'dive',vx:-3.4,vy:0}),20);},
- cannons:()=>{if(G.stage<2)dly(2,i=>sp('can',W+20,302,{mv:'ground'}),40);},
+cannons:()=>{if(STG[G.stage].ground)dly(2,i=>sp('can',W+20,302,{mv:'ground'}),40);},
  kettles:()=>{dly(3,i=>sp('ket',W+20,rnd(60,260),{mv:'stop',tx:rnd(460,560),ty:rnd(60,260),st:60,stay:120}),30);},
  junk:()=>{sp('junk',W+40,rnd(80,220),{mv:'stop',tx:rnd(470,540),ty:rnd(80,240),st:90,stay:260});},
+ iceSwarm:()=>{dly(4,i=>sp('ice',W+20,rnd(50,270),{mv:'stop',tx:rnd(380,570),ty:rnd(50,270),st:60,stay:140}),24);},
+ oniRaid:()=>{dly(3,i=>sp('oni',W+20,70+i*90,{mv:'sine',vx:-1.7,amp:36,fq:.04,ph:i*2}),22);},
 };
 const DECK=[
  ['dfLine','dfSwoop','beetle','dfV','lantern','cannons','dfLine','supply','bats','dfSwoop','beetle','lantern','dfV','cannons','dfLine','bats','beetle','supply','dfSwoop','lantern','dfV','beetle'],
  ['dfLine','kettles','bats','beetle','cannons','dfSwoop','supply','kettles','lantern','dfV','bats','beetle','kettles','cannons','supply','dfLine','lantern','beetle','bats','kettles','dfSwoop','beetle'],
  ['bats','junk','dfLine','lantern','dfSwoop','supply','junk','bats','dfV','beetle','lantern','junk','supply','dfLine','bats','junk','dfSwoop','lantern','beetle','junk','bats','dfV'],
+ ['iceSwarm','dfLine','bats','beetle','iceSwarm','supply','lantern','dfSwoop','iceSwarm','kettles','dfV','beetle','supply','iceSwarm','bats','lantern','dfLine','iceSwarm','beetle','supply','dfSwoop','iceSwarm'],
+ ['oniRaid','dfSwoop','junk','iceSwarm','oniRaid','supply','beetle','bats','oniRaid','lantern','dfV','junk','supply','oniRaid','kettles','beetle','iceSwarm','oniRaid','supply','junk','bats','oniRaid'],
 ];
 // 복습 문제 칸(QZ): 웨이브 사이에 멈춤 문제 창을 끼워 넣는다.
 for(const d of DECK)for(const i of [3,8,13,18,23])d.splice(i,0,'QZ');
@@ -1416,6 +1443,8 @@ function updEnemy(e){e.t++;if(e.fl)e.fl--;const fr=G.dm.fr;
     case'junk':if(e.t>e.st){for(let i=0;i<3;i++)eb(e.x-20,e.y-8+i*8,PI,3,'f');fan(e.x,e.y,5,2.4,.3,'r');e.ft=75*fr;}else e.ft=10;break;
     case'bat':if(R()<.4)eb(e.x,e.y,aimA(e.x,e.y),3,'r');e.ft=9999;break;
     case'sup':e.ft=9999;break;
+    case'ice':if(e.t>e.st){fan(e.x-8,e.y,3,3.1,.2,'b');e.ft=68*fr;}else e.ft=10;break;
+    case'oni':fan(e.x-12,e.y,2,3.6,.07,'r');e.ft=46*fr;break;
   }}
 function dmgEnemy(e,d){e.hp-=d;e.fl=3;if(e.hp<=0&&!e.dead)killEnemy(e);}
 
@@ -1424,6 +1453,8 @@ function makeBoss(n){const hp=G.dm.hp;let b;
   if(n==0)b={n,x:W+140,y:170,tx:500,ty:170,t:0,parts:[{k:'clubA',ox:-30,oy:-70,r:24,hp:620*hp},{k:'clubB',ox:-30,oy:72,r:24,hp:620*hp},{k:'core',ox:-4,oy:0,r:40,hp:2400*hp,core:1}]};
   if(n==1){b={n,x:W+80,y:170,t:0,hist:[],parts:[{k:'core',ox:0,oy:0,r:26,hp:2600*hp,core:1}]};for(let i=0;i<10;i++)b.parts.push({k:'seg',i,r:20,hp:170*hp,ox:0,oy:0});}
   if(n==2)b={n,x:W+200,y:150,tx:460,ty:150,t:0,parts:[{k:'tur',ox:-70,oy:-2,r:16,hp:520*hp},{k:'tur',ox:-5,oy:-2,r:16,hp:520*hp},{k:'tur',ox:60,oy:-2,r:16,hp:520*hp},{k:'drg',ox:-150,oy:22,r:30,hp:1500*hp},{k:'core',ox:110,oy:-8,r:28,hp:2400*hp,core:1}]};
+  if(n==3)b={n,x:W+170,y:180,tx:470,t:0,parts:[{k:'tail',i:0,ox:104,oy:-86,r:26,hp:560*hp},{k:'tail',i:1,ox:146,oy:38,r:26,hp:560*hp},{k:'tail',i:2,ox:100,oy:96,r:26,hp:560*hp},{k:'core',ox:-30,oy:-22,r:32,hp:2800*hp,core:1}]};
+  if(n==4)b={n,x:W+180,y:170,tx:480,t:0,punch:0,parts:[{k:'fist',i:0,ox:-86,oy:-80,r:26,hp:900*hp},{k:'fist',i:1,ox:-86,oy:84,r:26,hp:900*hp},{k:'core',ox:0,oy:-6,r:40,hp:3600*hp,core:1}]};
   b.parts.forEach(p=>{p.max=p.hp;p.fl=0;p.dead=0;p.wx=0;p.wy=0;});b.max=b.parts.reduce((s,p)=>s+p.max,0);b.entry=150;b.ft=60;b.ph=1;b.die=0;return b;}
 function bossHp(b){return b.parts.reduce((s,p)=>s+Math.max(0,p.hp),0);}
 function partsLeft(b){return b.parts.filter(p=>!p.core&&!p.dead).length;}
@@ -1465,6 +1496,30 @@ function updBoss(b){b.t++;const fr=G.dm.fr;
     if(b.ph==1&&b.ft<=0){b.parts.forEach(p=>{if(p.k=='tur'&&!p.dead)fan(p.wx-14,p.wy,3,3,.2,'f');});for(let i=0;i<5;i++)eb(b.x-140+i*45,b.y+44,PI*.75,2.4,'r');b.ft=60*fr;}
     if(b.ph==2){if(b.t%3==0){const a=PI+Math.sin(b.t*.03)*.7;eb(drg.wx-40,drg.wy+10,a+rnd(-.05,.05),3.6,'f');}if(b.t%80==0)ring(b.x,b.y,16,2.2,'b',b.t);}
     if(b.ph==3){if(b.t%5==0)eb(b.x+120,b.y-10,b.t*.17,2.6,'r');if(b.t%5==2)eb(b.x+120,b.y-10,-b.t*.17,2.6,'b');if(b.t%45==0)fan(b.x,b.y+40,7,3,.14,'f');b.tx=440+Math.sin(b.t*.01)*40;}
+  }
+  // 4th boss, 설한 구미호: three tails shoot ice fans; then ice spirals; last form lunges across the screen.
+  if(b.n==3){const tl=b.parts.filter(p=>p.k=='tail'&&!p.dead).length;b.ph=tl?1:hpf>.28?2:3;
+    b.x+=(b.tx-b.x)*(b.ph==3?.05:.03);b.y=180+Math.sin(b.t*.018)*(b.ph==3?90:60);
+    b.parts.forEach(p=>{const w=p.k=='tail'?Math.sin(b.t*.05+p.i*1.7)*8:0;p.wx=b.x+p.ox+w*.5;p.wy=b.y+p.oy+w;});
+    if(b.entry>0)return;b.ft--;const mx=b.x-58,my=b.y-16;
+    if(b.ph==1&&b.ft<=0){b.parts.forEach(p=>{if(p.k=='tail'&&!p.dead)fan(p.wx-10,p.wy,3,3,.22,'b');});if(b.t%3==0)ring(mx,my,12,2.3,'b',b.t*.1);b.ft=56*fr;}
+    if(b.ph==2){if(b.t%4==0)eb(mx,my,b.t*.19,2.8,'b');if(b.t%60==0)fan(mx,my,7,3.2,.13,'f');}
+    if(b.ph==3){if(b.t%3==0)eb(mx,my,b.t*.23,3,'b');if(b.t%3==1)eb(mx,my,-b.t*.23,3,'r');if(b.t%200==0)b.tx=190;if(b.t%200==70)b.tx=470;}
+  }
+  // 5th boss, 흑철요왕: two iron fists punch at the guardian; then moon rings; last form fires crescent waves.
+  if(b.n==4){const fl=b.parts.filter(p=>p.k=='fist'&&!p.dead);b.ph=fl.length?1:hpf>.3?2:3;
+    b.x+=(b.tx-b.x)*.03;b.y=170+Math.sin(b.t*.016)*(b.ph==3?70:36);
+    b.punch++;const pu=b.parts.find(p=>p.k=='fist'&&!p.dead&&p.i==(Math.floor(b.t/150)%2))||fl[0];
+    b.parts.forEach(p=>{if(p.k!='fist'){p.wx=b.x+p.ox;p.wy=b.y+p.oy;return;}
+      const hx=b.x+p.ox+Math.sin(b.t*.04+p.i*2)*6,hy=b.y+p.oy+Math.cos(b.t*.05+p.i)*8;if(!p.wx){p.wx=hx;p.wy=hy;}
+      if(p===pu&&b.entry<=0){const k=b.t%150;if(k==40){p.tx=G.p.x;p.ty=G.p.y;}
+        if(k<40){p.wx+=((hx+30)-p.wx)*.1;p.wy+=(hy-p.wy)*.1;}else if(k<70){p.wx+=((p.tx??hx)-p.wx)*.16;p.wy+=((p.ty??hy)-p.wy)*.16;}else{p.wx+=(hx-p.wx)*.06;p.wy+=(hy-p.wy)*.06;}
+        if(k==70){G.shake=6;ring(p.wx,p.wy,10,2.2,'r',b.t);}}
+      else{p.wx+=(hx-p.wx)*.1;p.wy+=(hy-p.wy)*.1;}});
+    if(b.entry>0)return;b.ft--;const cx=b.x-10,cy=b.y-6;
+    if(b.ph==1&&b.ft<=0){fl.forEach(p=>{if(p!==pu||b.t%150>80)fan(p.wx-14,p.wy,3,3,.18,'r');});fan(cx,cy,5,3.2,.16,'f');b.ft=62*fr;}
+    if(b.ph==2){if(b.t%50==0)ring(cx,cy,20,2.3,'b',b.t*.07);if(b.t%4==0)eb(cx,cy,b.t*.15,2.7,'r');}
+    if(b.ph==3){if(b.t%32==0)fan(cx,cy,11,3,.16,'f');if(b.t%32==16)ring(cx,cy,16,2.4,'b',b.t);if(b.t%5==0)eb(cx,cy,-b.t*.2,2.8,'r');b.tx=470+Math.sin(b.t*.012)*60;}
   }
 }
 
@@ -1525,7 +1580,7 @@ function update(){
     let mx=IN.dx,my=IN.dy;IN.dx=0;IN.dy=0;const sp2=CH[p.ch].spd;
     let kx=(IN.k.ArrowRight||IN.k.KeyD?1:0)-(IN.k.ArrowLeft||IN.k.KeyA?1:0),ky=(IN.k.ArrowDown||IN.k.KeyS?1:0)-(IN.k.ArrowUp||IN.k.KeyW?1:0);
     if(kx&&ky){kx*=.7071;ky*=.7071;}mx+=kx*sp2;my+=ky*sp2;
-    p.x=cl(p.x+mx,18,W-24);p.y=cl(p.y+my,24,G.stage<2?300:H-18);p.frame++;
+    p.x=cl(p.x+mx,18,W-24);p.y=cl(p.y+my,24,STG[G.stage].ground?300:H-18);p.frame++;
     p.trail.unshift({x:p.x,y:p.y});if(p.trail.length>40)p.trail.pop();
     if(p.inv)p.inv--;
     const press=IN.chg||IN.k.KeyC;if(p.cd>0)p.cd--;if(p.sk>0)p.sk--;
@@ -1614,7 +1669,7 @@ function drawBG(stage,scroll){
 }
 function drawAtmosphere(stage,scroll,time){
   if(LOWFX)return;
-  const colors=['#cfe5fe','#ffb469','#ffd69c'];
+  const colors=['#cfe5fe','#ffb469','#ffd69c','#f2fbff','#ffe3a8'];
   X.save();
   for(let i=0;i<24;i++){
     const x=((i*131+scroll*.3+time*.18)%(W+24))-12;
@@ -1728,6 +1783,15 @@ function drawBoss(b){const fl=b.parts.some(p=>p.fl);
     b.parts.forEach(p=>{if(p.k=='tur'){if(!p.dead)ds(A.tur,p.wx,p.wy,2);else{X.fillStyle='#1a1a1a';X.fillRect(p.wx-14,p.wy+2,28,10);}}});
     if(!dr.dead)ds(fr(b.ph==2&&(b.t>>4)%2?'drgO':'drg',b.t),dr.wx,dr.wy,2);else{X.globalAlpha=.4;ds(A.drg,dr.wx+10,dr.wy+30,2);X.globalAlpha=1;}
     if(fl){X.globalCompositeOperation='lighter';X.globalAlpha=.25;ds(sh,b.x,b.y,2);X.globalAlpha=1;X.globalCompositeOperation='source-over';}}
+  const flash=(im,x,y,sc,rot)=>{X.globalCompositeOperation='lighter';X.globalAlpha=.4;if(rot!==undefined){X.save();X.translate(x,y);X.rotate(rot);ds(im,0,0,sc);X.restore();}else ds(im,x,y,sc);X.globalAlpha=1;X.globalCompositeOperation='source-over';};
+  if(b.n==3){X.globalCompositeOperation='lighter';dg(A.gC,b.x-58,b.y-16,60+Math.sin(b.t*.2)*8);X.globalCompositeOperation='source-over';
+    for(const p of b.parts){if(p.k!='tail'||p.dead)continue;const im=fr('tail',b.t,p.i*2),rot=[-.55,.25,.6][p.i]+Math.sin(b.t*.05+p.i*1.7)*.12;
+      X.save();X.translate(p.wx,p.wy);X.rotate(rot);ds(im,0,0,2);X.restore();if(p.fl)flash(im,p.wx,p.wy,2,rot);}
+    const im=fr('fox',b.t);ds(im,b.x,b.y,2);if(b.parts[3].fl)flash(im,b.x,b.y,2);}
+  if(b.n==4){X.globalCompositeOperation='lighter';dg(A.gP,b.x-4,b.y-4,150+Math.sin(b.t*.08)*14);X.globalCompositeOperation='source-over';
+    const im=fr('king',b.t);ds(im,b.x,b.y,2);if(b.parts[2].fl)flash(im,b.x,b.y,2);
+    for(const p of b.parts){if(p.k!='fist'||p.dead)continue;X.strokeStyle='rgba(200,80,255,.45)';X.lineWidth=3;X.beginPath();X.moveTo(b.x-20,b.y+(p.i?30:-30));X.lineTo(p.wx+10,p.wy);X.stroke();
+      const fi=fr('fist',b.t,p.i*3);ds(fi,p.wx,p.wy,2);if(p.fl)flash(fi,p.wx,p.wy,2);}}
 }
 const SKILL_ART=[
   {shade:'#294a9b',edge:'#57c7ff',core:'#e5ffff'},
@@ -2016,12 +2080,12 @@ function storyScene(done){
   document.getElementById('storySkip').onclick=e=>{e.stopPropagation();finish();};
   show(0);
 }
-function stageClear(){const p=G.p;if(G.stage>=2){ending();return;}G.state='clear';BG.on=false;showUI();if(p.hp<p.max)p.hp++;saveHi();
+function stageClear(){const p=G.p;if(G.stage>=STG.length-1){ending();return;}G.state='clear';BG.on=false;showUI();if(p.hp<p.max)p.hp++;saveHi();
   showOv(`<div class="pan"><h2>제${G.stage+1}막 돌파!</h2><p>점수 <b style="color:#f5c542">${G.score.toLocaleString()}</b> · 모은 엽전 ${G.stCoins.toLocaleString()}닢 · 처치 ${G.kills}</p><p>기력이 1 회복되었습니다.</p>${resultHtml(x=>x.stage===G.stage)}<div class="row"><button class="mb" id="nx" data-keys="${K_OK}">제${G.stage+2}막 「${STG[G.stage+1].name}」로${kb('Enter')}</button></div></div>`);
   document.getElementById('nx').onclick=()=>{auInit();startStage(G.stage+1);};}
 function ending(){G.state='clear';BG.on=false;showUI();saveHi();endingPanel();}
 function endingPanel(){
-  showOv(`<div class="pan"><h2>달빛을 되찾다</h2><p>흑룡함이 운해 아래로 가라앉고, 밤하늘에 다시 둥근 달이 떠올랐다.</p><p>${CH[G.ch].full}의 이름이 사신의 전설에 새겨졌다.</p><p>최종 점수 <b style="color:#f5c542">${G.score.toLocaleString()}</b>${G.cont?` · 이어하기 ${G.cont}회`:''} · 최대 엽전 배율 ×${G.maxMult.toFixed(1)}</p>${resultHtml()}${reviewNote()}<div class="row"><button class="mb" id="t" data-keys="${K_OK} Escape">처음으로${kb('Enter')}</button></div></div>`);
+  showOv(`<div class="pan"><h2>달빛을 되찾다</h2><p>흑철요왕이 무너지자 달을 감싼 쇠가시가 부서지고, 밤하늘에 다시 둥근 달이 떠올랐다.</p><p>${CH[G.ch].full}의 이름이 사신의 전설에 새겨졌다.</p><p>최종 점수 <b style="color:#f5c542">${G.score.toLocaleString()}</b>${G.cont?` · 이어하기 ${G.cont}회`:''} · 최대 엽전 배율 ×${G.maxMult.toFixed(1)}</p>${resultHtml()}${reviewNote()}<div class="row"><button class="mb" id="t" data-keys="${K_OK} Escape">처음으로${kb('Enter')}</button></div></div>`);
   document.getElementById('t').onclick=goHome;}
 function gameOver(){if(G.state!='play')return;G.state='over';BG.on=false;showUI();saveHi();overPanel();}
 function overPanel(){
