@@ -269,7 +269,12 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 /* ================= 기본 ================= */
 const W=640,H=360;
 const PLAYER_HIT_PADDING=1;
-const cv=document.getElementById('c'),X=cv.getContext('2d');
+const cv=document.getElementById('c');let X=cv.getContext('2d');
+// Speed: touch devices (tablets) start at a lower canvas resolution and smaller sprite caches;
+// any device that keeps missing frames steps the resolution down further (see perfWatch).
+const TOUCH=(window.matchMedia&&matchMedia('(pointer:coarse)').matches)||navigator.maxTouchPoints>0;
+const RS_STEPS=[4,2.5,2,1.5,1.25,1];let RS_CAP=TOUCH?2:4,LOWFX=false;
+const SPR_MAX=TOUCH?5:8;
 const R=Math.random,TAU=Math.PI*2,PI=Math.PI;
 const rnd=(a,b)=>a+R()*(b-a),ri=(a,b)=>Math.floor(rnd(a,b+1)),cl=(v,a,b)=>v<a?a:v>b?b:v,pick=a=>a[Math.floor(R()*a.length)];
 const dist2=(a,b,c,d)=>(a-c)*(a-c)+(b-d)*(b-d);
@@ -1014,7 +1019,7 @@ async function loadCombatArt(){
   function sprite(key,original,pose=0,squash=1){
     const image=illustrations[key];if(!image)return original;
     const w=original.logicalWidth||original.width,h=original.logicalHeight||original.height;
-    const k=cl(Math.max(image.width/w,image.height/h),3,8);
+    const k=cl(Math.max(image.width/w,image.height/h),3,SPR_MAX);
     const c=cnv(Math.round(w*k),Math.round(h*k)),g=c.getContext('2d');
     const scale=Math.min(c.width/image.width,c.height/image.height);
     const sw=image.width*scale*squash,sh=image.height*scale*(pose ? 0.97 : 1);
@@ -1597,16 +1602,18 @@ function updBomb(){const f=G.bombFx;f.t++;const p=G.p;
 /* ================= 그리기 ================= */
 function txt(s,x,y,sz,c,al='left',f=HF,ol='#120a10',lw=3){X.font=(f===HF?'700 ':'')+sz+'px '+f;X.textAlign=al;X.textBaseline='middle';if(ol){X.lineWidth=lw;X.strokeStyle=ol;X.lineJoin='round';X.strokeText(s,x,y);}X.fillStyle=c;X.fillText(s,x,y);}
 function rr(x,y,w,h,r){X.beginPath();X.moveTo(x+r,y);X.arcTo(x+w,y,x+w,y+h,r);X.arcTo(x+w,y+h,x,y+h,r);X.arcTo(x,y+h,x,y,r);X.arcTo(x,y,x+w,y,r);X.closePath();}
+// The stage strip is scaled once to the canvas height and then copied 1:1 (big source images are slow on tablets).
+const BGC={};
+function bgStrip(stage){const im=A.scenery?.[stage];if(!im)return null;const h=Math.round(H*RS);let c=BGC[stage];
+  if(!c||c.h!==h){const w=Math.round(im.width*h/im.height);c=cnv(w,h);fitDraw(c.getContext('2d'),im,0,0,w,h);c.h=h;BGC[stage]=c;}return c;}
 function drawBG(stage,scroll){
-  const image=A.scenery?.[stage];if(!image)return;
+  const strip=bgStrip(stage);if(!strip)return;
   // 배경 띠는 좌우 끝이 이어지도록 만들어 두었으므로 뒤집지 않고 그대로 반복한다.
-  const width=image.width*H/image.height;
-  const offset=(scroll*.42)%width;
-  X.save();X.imageSmoothingQuality='high';
-  for(let left=-offset;left<W;left+=width)X.drawImage(image,left,0,width+.5,H);
-  X.restore();
+  const width=strip.width/RS,offset=(scroll*.42)%width;
+  for(let left=-offset;left<W;left+=width)X.drawImage(strip,Math.round(left*RS)/RS,0,width+1/RS,H);
 }
 function drawAtmosphere(stage,scroll,time){
+  if(LOWFX)return;
   const colors=['#cfe5fe','#ffb469','#ffd69c'];
   X.save();
   for(let i=0;i<24;i++){
@@ -1630,6 +1637,7 @@ function render(){
   X.restore();
   if(G.state=='play'||G.state=='over'||G.state=='clear')drawHUD();
   if(G.flash){X.fillStyle='rgba(255,255,255,'+(G.flash/24)+')';X.fillRect(0,0,W,H);}
+  if(PF.show)txt(Math.round(PF.fps)+' fps · x'+RS.toFixed(2)+(LOWFX?' · low':''),W/2,H-8,9,'#fff','center');
 }
 function drawWorld(){const p=G.p;
   // 적
@@ -1658,7 +1666,7 @@ function drawWorld(){const p=G.p;
       if(p.hbA>.02&&A.core){X.globalAlpha=p.hbA;X.globalCompositeOperation='lighter';dg(A.gR,p.x,p.y,16);X.globalCompositeOperation='source-over';dg(A.core,p.x,p.y,12);X.globalAlpha=1;}}}
   // 샷
   X.globalCompositeOperation='lighter';
-  for(const s of G.sh){
+  for(const s of LOWFX?[]:G.sh){
     if(s.k=='cres'){dg(A.gB,s.x,s.y,26);}
     if(s.k=='tal'||s.k=='bigtal'){dg(A.gR,s.x,s.y,s.k=='bigtal'?40:16);}
     if(s.k=='arr'){dg(A.gG,s.x,s.y,18);}
@@ -1836,23 +1844,33 @@ function hudFrame(x,y,w,h,trim){
   Rc(X,x+w-bevel-17,y+h-2,17,1,trim);
 }
 function bar(x,y,w,h,f,c,bg='rgba(0,0,0,.6)'){X.fillStyle=bg;X.fillRect(x,y,w,h);X.fillStyle=c;X.fillRect(x,y,w*cl(f,0,1),h);}
+// HUD panels only change a few times a second, so each is drawn into its own canvas and reused until its values change.
+const HC={};
+function hudCache(id,sig,x,y,w,h,draw){const c=HC[id]||(HC[id]={cv:cnv(1,1)});
+  if(c.sig!==sig||c.rs!==RS){const cw=Math.ceil(w*RS),chh=Math.ceil(h*RS);if(c.cv.width!==cw||c.cv.height!==chh){c.cv.width=cw;c.cv.height=chh;}
+    const g=c.cv.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cw,chh);g.setTransform(RS,0,0,RS,-x*RS,-y*RS);
+    const X0=X;X=g;try{draw();}finally{X=X0;}c.sig=sig;c.rs=RS;}
+  X.drawImage(c.cv,x,y,w,h);}
 function drawHUD(){const p=G.p,ch=CH[p.ch];
+  const rdy=p.opt>0&&!p.cd,sv=!p.opt?0:p.sk>0?p.sk/SPK.len:p.cd?1-p.cd/(SPK.len+SPK.cd):1;bC.classList.toggle('off',!rdy);
+  hudCache('L',[p.ch,p.hp,p.max,p.pow,p.opt,p.bombs,rdy,p.sk>0,Math.round(sv*90)].join(),4,4,216,56,()=>{
   hudFrame(6,6,212,52,'#79afb6');
   X.fillStyle='#000';X.fillRect(11,11,42,42);porDraw(p.ch,11,11,42);X.strokeStyle=ch.color;X.strokeRect(11,11,42,42);
   txt(ch.name,58,18,13,'#ffffff');for(let i=0;i<p.max;i++)txt('♥',92+i*12,18,12,i<p.hp?'#ff3a5a':'#3a3a4a','left',HF,'#000',2);
   X.fillStyle='rgba(0,0,0,.5)';X.fillRect(150,11,64,14);txt('['+ch.wpn+'] '+p.pow+'단계',182,18,10,'#9af8ff','center');
-  {const rdy=p.opt>0&&!p.cd,v=!p.opt?0:p.sk>0?p.sk/SPK.len:p.cd?1-p.cd/(SPK.len+SPK.cd):1;
+  {const v=sv;
   txt(!p.opt?'수호령 없음':p.sk>0?'수호령 진!':rdy?'수호령 준비':'수호령 쉬는 중',58,32,9,!p.opt?'#7f8799':rdy||p.sk?'#c8ffb0':'#cfd8ff');bar(124,29,90,6,v,p.sk>0?'#fff27a':rdy?'#9aff7a':'#45d6c8');
-  bC.classList.toggle('off',!rdy);}
+  }
   txt('오의',58,46,9,'#ffb0a0');for(let i=0;i<5;i++){X.fillStyle=i<p.bombs?'#d8352a':'rgba(255,255,255,.12)';X.beginPath();X.arc(88+i*13,46,5,0,TAU);X.fill();if(i<p.bombs){txt('奧',88+i*13,46.5,7,'#ffe9a8','center','"Sasin Hanja",serif',null);}}
-  txt('수호 '+p.opt,160,46,9,'#c8ffb0');
+  txt('수호 '+p.opt,160,46,9,'#c8ffb0');});
+  {const q=qzScore();hudCache('R',[G.stage,G.dm.n,G.score,Math.floor(G.mult*10),Math.round((1-Math.min(1,G.multT/150))*60),G.hi,q.ok,q.n].join(),W-228,4,226,60,()=>{
   X.save();X.translate(-30,0);
   hudFrame(W-196,6,190,56,'#c49e63');{const q=qzScore();txt('복습 정답 '+q.ok+' / '+q.n,W-190,49,10,'#9dffb0');}
   txt('제'+(G.stage+1)+'막 '+STG[G.stage].name,W-190,17,11,'#ffffff');txt(G.dm.n,W-190,25,8,'#9af8ff');
   txt(G.score.toLocaleString(),W-12,19,17,'#f5c542','right');
   txt('엽전 ×'+(Math.floor(G.mult*10)/10).toFixed(1),W-190,36,11,G.mult>=5?'#ff9a5a':'#f5c542');bar(W-118,33,60,5,1-Math.min(1,G.multT/150),'#45d6c8');
   txt('최고 '+G.hi.toLocaleString(),W-12,38,9,'#a0a8c8','right');
-  X.restore();
+  X.restore();});}
   if(G.boss){const b=G.boss,f=bossHp(b)/b.max;hudFrame(226,6,W-460,30,'#c49e63');
     bar(232,11,W-472,8,f,'#e02a2a','#2a0a0a');for(let i=1;i<3;i++){X.fillStyle='#c08030';X.fillRect(232+(W-472)*i/3,10,1.5,10);}
     const ph=['','파괴 가능 부위 '+partsLeft(b)+'개','본체 노출','최종 형태'][b.n==1?(b.ph==1?1:3):b.ph]||'';txt(STG[G.stage].boss+'  ['+ph+']',W/2,28,10,'#ffe0c0','center');}
@@ -2019,7 +2037,7 @@ let scale=1,RS=1;const drag={id:null,x:0,y:0};
 const landscape=document.getElementById('landscape');
 function fit(){const vw=landscape.clientWidth,vh=landscape.clientHeight;scale=Math.min(vw/W,vh/H);const w=Math.floor(W*scale),h=Math.floor(H*scale),l=Math.floor((vw-w)/2),t=Math.floor((vh-h)/2);
   // 캔버스 내부 해상도를 실제 화면 픽셀에 맞춘다(논리 좌표 640×360은 그대로).
-  const dpr=window.devicePixelRatio||1,k=cl(w*dpr/W,1,2560/W),cw=Math.round(W*k),chh=Math.round(H*k);
+  const dpr=window.devicePixelRatio||1,k=cl(w*dpr/W,1,RS_CAP),cw=Math.round(W*k),chh=Math.round(H*k);
   if(cv.width!==cw||cv.height!==chh){cv.width=cw;cv.height=chh;}RS=cw/W;
   landscape.style.setProperty('--frame-height',h+'px');
   for(const el of[cv,stEl,titleScreen,storyEl]){el.style.width=w+'px';el.style.height=h+'px';el.style.left=l+'px';el.style.top=t+'px';}
@@ -2085,7 +2103,12 @@ window.addEventListener('blur',()=>{IN.k={};IN.chg=false;bC.classList.remove('on
 
 /* ================= 루프 ================= */
 let last=performance.now(),acc=0;
-function frame(t){requestAnimationFrame(frame);let dt=t-last;last=t;if(dt>100)dt=100;acc+=dt;let n=0;
+// Steps the canvas resolution down while play keeps running below ~45 fps; the lowest steps also drop small effects.
+const PF={avg:16.7,n:0,fps:0,show:/[?&]fps/.test(location.search)};
+function perfWatch(dt){PF.avg+=(dt-PF.avg)*.05;PF.fps=1000/PF.avg;if(G.state!=='play'||G.paused||G.quizPause||document.hidden){PF.n=0;return;}
+  if(PF.avg>22)PF.n++;else PF.n=Math.max(0,PF.n-2);
+  if(PF.n>90){PF.n=0;const i=RS_STEPS.findIndex(v=>v<Math.min(RS_CAP,RS)-.01);if(i>=0){RS_CAP=RS_STEPS[i];if(RS_CAP<=1.5)LOWFX=true;fit();}else LOWFX=true;}}
+function frame(t){requestAnimationFrame(frame);let dt=t-last;last=t;if(dt>100)dt=100;perfWatch(dt);acc+=dt;let n=0;
   while(acc>=16.667&&n<4){if(G.state=='play')update();else{G.menuT=(G.menuT||0)+1;G.menuScroll=(G.menuScroll||0)+.8;}acc-=16.667;n++;}
   if(n>=4)acc=0;try{render();}catch(e){console.error(e);}bgm();}
 try{buildAssets();}catch(e){console.error(e);document.body.insertAdjacentHTML('beforeend','<p style="position:fixed;top:0;color:#f88">초기화 오류: '+e.message+'</p>');}
@@ -2093,7 +2116,7 @@ startGame.disabled=true;
 loadCombatArt().then(ill=>{startGame.disabled=false;buildAnims(ill);}).catch(()=>{startGame.textContent='전투 그림을 열 수 없습니다';});
 showUI();requestAnimationFrame(frame);
 if(document.fonts)document.fonts.ready.then(()=>{});
-window.__G=G;window.__api={update,render,drawPreview,newRun,qzBuild,qzNext,studyScreen,bossQuiz,popupQuiz,QZ,QS,startStage,doBomb,selectScreen,makeBoss,IN,A,AU,sfx,bgm,AN,fr,RIG,aniFrames};
+window.__G=G;window.__api={update,render,drawBG,drawAtmosphere,drawWorld,drawHUD,fit,PF,perfWatch,q:()=>({RS_CAP,LOWFX,RS}),drawPreview,newRun,qzBuild,qzNext,studyScreen,bossQuiz,popupQuiz,QZ,QS,startStage,doBomb,selectScreen,makeBoss,IN,A,AU,sfx,bgm,AN,fr,RIG,aniFrames};
 }
 </script>
 </body>
