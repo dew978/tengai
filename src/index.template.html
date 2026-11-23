@@ -1058,7 +1058,9 @@ async function loadCombatArt(){
   A.pl.forEach((f,i)=>A['hero'+i]=f);
   // Spirit-skill seal (one per guardian: art/seal0-3.webp) and the hitbox jewel (art/core.webp)
   const pre=(im,n)=>{if(!im)return null;const c=cnv(n,n);fitDraw(c.getContext('2d'),im,0,0,n,n);return c;};
-  A.seal=[0,1,2,3].map(i=>pre(illustrations['seal'+i],384));A.core=pre(illustrations.core,64);
+  A.seal=[0,1,2,3].map(i=>pre(illustrations['seal'+i],384));
+  // life icon (art/life.webp) and a dimmed copy for lost lives
+  if(illustrations.life){const im=illustrations.life;A.life=im;const c=cnv(im.width,im.height),g=c.getContext('2d');g.filter='grayscale(1) brightness(.5)';g.globalAlpha=.6;g.drawImage(im,0,0);A.lifeOff=c;}A.core=pre(illustrations.core,64);
   return illustrations;
 }
 const POR_SCALE=7;
@@ -1323,7 +1325,7 @@ try{G.hi=+localStorage.getItem('ssb_hi')||0;}catch(e){}
 const IN={dx:0,dy:0,k:{},chg:false,touch:false};
 
 function newRun(){qzBuild();G.score=0;G.cont=0;G.stage=0;const d=DIF[G.dif];G.p={x:120,y:180,ch:G.ch,hp:d.lives,max:d.lives,bombs:3,pow:1,opt:0,inv:120,ft:0,hold:0,sk:0,cd:0,sp:[],frame:0,trail:[],dead:0};G.dm=d;startStage(0);}
-function startStage(n){G.stage=n;G.dm=stageDm(n);G.en=[];G.sh=[];G.eb=[];G.co=[];G.it=[];G.pt=[];G.pop=[];G.boss=null;G.t=0;G.scroll=0;G.mult=1;G.multT=0;G.phase='intro';G.pt0=0;G.waveI=0;G.wt=0;G.quizPause=false;G.kills=0;G.stCoins=0;
+function startStage(n){G.stage=n;G.dm=stageDm(n);G.carT=0;G.en=[];G.sh=[];G.eb=[];G.co=[];G.it=[];G.pt=[];G.pop=[];G.boss=null;G.t=0;G.scroll=0;G.mult=1;G.multT=0;G.phase='intro';G.pt0=0;G.waveI=0;G.wt=0;G.quizPause=false;G.kills=0;G.stCoins=0;
   G.p.x=110;G.p.y=180;G.p.inv=120;G.talk={t:0,txt:LINES[G.ch][n]};BG.s=n;BG.tp=STG[n].tempo;BG.on=true;BG.i=0;G.state='play';showUI();hideOv();}
 
 /* ================= 생성 ================= */
@@ -1342,6 +1344,8 @@ cannons:()=>{if(STG[G.stage].ground)dly(2,i=>sp('can',W+20,302,{mv:'ground'}),40
  kettles:()=>{dly(3,i=>sp('ket',W+20,rnd(60,260),{mv:'stop',tx:rnd(460,560),ty:rnd(60,260),st:60,stay:120}),30);},
  junk:()=>{sp('junk',W+40,rnd(80,220),{mv:'stop',tx:rnd(470,540),ty:rnd(80,240),st:90,stay:260});},
  iceSwarm:()=>{dly(4,i=>sp('ice',W+20,rnd(50,270),{mv:'stop',tx:rnd(380,570),ty:rnd(50,270),st:60,stay:140}),24);},
+// two weak winged chests, each dropping a 力 (shot power) item
+ carrier:()=>{const y=rnd(80,210);for(let i=0;i<2;i++)sp('sup',W+20+i*36,y+(i?44:0),{mv:'sine',vx:-1.6,amp:22,fq:.035,ph:i*2,drop:'P',hp:6});},
  oniRaid:()=>{dly(3,i=>sp('oni',W+20,70+i*90,{mv:'sine',vx:-1.7,amp:36,fq:.04,ph:i*2}),22);},
 };
 const DECK=[
@@ -1354,6 +1358,7 @@ const DECK=[
 // 복습 문제 칸(QZ): 웨이브 사이에 멈춤 문제 창을 끼워 넣는다.
 for(const d of DECK)for(const i of [3,8,13,18,23])d.splice(i,0,'QZ');
 WAVES.QZ=()=>popupQuiz();
+const CARRIER_GAP=1200;   // 20 s at 60 fps
 const WGAP=170,bossAt=n=>WGAP*DECK[n].length+110;
 
 /* ================= 탄 ================= */
@@ -1410,9 +1415,15 @@ function doBomb(){const p=G.p;if(G.state!='play'||G.quizPause||p.bombs<=0||G.cut
 const BEAST_SPD=.65,BEAST_LEN=154,BOMB_LEN=BEAST_LEN+20,BEAST_GAP=20;   // BEAST_SPD < 1 slows the beast crossing
 const beastT=(f,b)=>f.t-f.order.indexOf(b)*BEAST_GAP;
 function startBombFx(){const p=G.p;G.bombFx={t:0,ch:p.ch,x:p.x,y:p.y,pts:[],order:[p.ch]};for(const b of G.eb)coins(b.x,b.y,1);G.eb=[];G.shake=12;G.flash=8;}
-function hurt(){const p=G.p;if(p.inv>0||p.dead)return;p.hp--;p.inv=150;sfx('hurt');G.shake=14;G.flash=6;boom(p.x,p.y,1,'#ffffff');
-  for(const b of G.eb)if(dist2(b.x,b.y,p.x,p.y)<120*120)b.dead=1;if(p.pow>1&&R()<.5){p.pow--;G.it.push({x:p.x,y:p.y,vx:2,vy:-2,k:'P',t:0});}
-  if(p.hp<=0){p.dead=1;boom(p.x,p.y,2.4);sfx('big');setTimeout(()=>gameOver(),1400);}}
+// A hit costs one life: the guardian is shot down, every enemy bullet is cleared, and unless it was the last
+// life it flies back in from the left with a ~2 s shield, the starting bomb count and the weakest shot.
+const RESPAWN={wait:50,enter:40,shield:120};
+function hurt(){const p=G.p;if(p.inv>0||p.dead)return;p.hp--;sfx('hurt');sfx('big');G.shake=14;G.flash=8;boom(p.x,p.y,2.2);
+  for(const b of G.eb)b.dead=1;p.hold=0;p.sk=0;sfxStop(AU.chg);AU.chg=null;p.dead=1;
+  if(p.hp<=0){boom(p.x,p.y,2.4);setTimeout(()=>gameOver(),1400);return;}
+  p.respawn=RESPAWN.wait;}
+function respawn(){const p=G.p;p.dead=0;p.respawn=0;p.x=-40;p.y=180;p.enter=RESPAWN.enter;p.inv=RESPAWN.enter+RESPAWN.shield;
+  p.pow=1;p.bombs=3;p.trail=[];p.sp.forEach(q=>{q.x=p.x;q.y=p.y;});pop(110,150,'재출격!','#fff2c0',14);}
 function getItem(k){const p=G.p;sfx('item');
   if(k=='P'){if(p.pow<4){p.pow++;pop(p.x,p.y-20,'영력 상승!','#8affff');}else{addScore(2000,p.x,p.y-20);}}
   if(k=='B'){if(p.bombs<5)p.bombs++;pop(p.x,p.y-20,BOMB_NAME+' +1','#ff9a8a');}
@@ -1574,13 +1585,16 @@ function update(){
     if(G.wt>bossAt(G.stage)&&G.en.length==0){G.phase='warn';G.pt0=G.t;sfx('warn');}}
   else if(G.q&&G.q.length){for(let i=G.q.length-1;i>=0;i--)if(G.q[i].t<=G.t){G.q[i].f();G.q.splice(i,1);}}
   if(G.phase=='warn'){if((G.t-G.pt0)%85==0&&G.t-G.pt0<170)sfx('warn');if(G.t-G.pt0>170){G.phase='boss';G.boss=makeBoss(G.stage);}}
+  if(G.phase=='waves'||G.phase=='warn'||G.phase=='boss'){if(++G.carT>=CARRIER_GAP){G.carT=0;WAVES.carrier();}}
   if(G.phase=='clear'&&G.t-G.pt0>150){stageClear();return;}
   // 플레이어
+  if(p.dead&&p.respawn>0&&--p.respawn==0)respawn();
   if(!p.dead){
     let mx=IN.dx,my=IN.dy;IN.dx=0;IN.dy=0;const sp2=CH[p.ch].spd;
+    if(p.enter>0){p.enter--;mx=(110-p.x)*.12;my=0;}
     let kx=(IN.k.ArrowRight||IN.k.KeyD?1:0)-(IN.k.ArrowLeft||IN.k.KeyA?1:0),ky=(IN.k.ArrowDown||IN.k.KeyS?1:0)-(IN.k.ArrowUp||IN.k.KeyW?1:0);
-    if(kx&&ky){kx*=.7071;ky*=.7071;}mx+=kx*sp2;my+=ky*sp2;
-    p.x=cl(p.x+mx,18,W-24);p.y=cl(p.y+my,24,STG[G.stage].ground?300:H-18);p.frame++;
+    if(kx&&ky){kx*=.7071;ky*=.7071;}if(!(p.enter>0)){mx+=kx*sp2;my+=ky*sp2;}
+    p.x=p.enter>0?p.x+mx:cl(p.x+mx,18,W-24);p.y=cl(p.y+my,24,STG[G.stage].ground?300:H-18);p.frame++;
     p.trail.unshift({x:p.x,y:p.y});if(p.trail.length>40)p.trail.pop();
     if(p.inv)p.inv--;
     const press=IN.chg||IN.k.KeyC;if(p.cd>0)p.cd--;if(p.sk>0)p.sk--;
@@ -1920,21 +1934,20 @@ function drawHUD(){const p=G.p,ch=CH[p.ch];
   hudCache('L',[p.ch,p.hp,p.max,p.pow,p.opt,p.bombs,rdy,p.sk>0,Math.round(sv*90)].join(),4,4,216,56,()=>{
   hudFrame(6,6,212,52,'#79afb6');
   X.fillStyle='#000';X.fillRect(11,11,42,42);porDraw(p.ch,11,11,42);X.strokeStyle=ch.color;X.strokeRect(11,11,42,42);
-  txt(ch.name,58,18,13,'#ffffff');for(let i=0;i<p.max;i++)txt('♥',92+i*12,18,12,i<p.hp?'#ff3a5a':'#3a3a4a','left',HF,'#000',2);
+  txt(ch.name,58,18,13,'#ffffff');for(let i=0;i<p.max;i++){const im=i<p.hp?A.life:A.lifeOff;if(im)X.drawImage(im,91+i*11,12,10,11.5);else txt('♥',92+i*12,18,12,i<p.hp?'#ff3a5a':'#3a3a4a','left',HF,'#000',2);}
   X.fillStyle='rgba(0,0,0,.5)';X.fillRect(150,11,64,14);txt('['+ch.wpn+'] '+p.pow+'단계',182,18,10,'#9af8ff','center');
   {const v=sv;
   txt(!p.opt?'수호령 없음':p.sk>0?'수호령 진!':rdy?'수호령 준비':'수호령 쉬는 중',58,32,9,!p.opt?'#7f8799':rdy||p.sk?'#c8ffb0':'#cfd8ff');bar(124,29,90,6,v,p.sk>0?'#fff27a':rdy?'#9aff7a':'#45d6c8');
   }
   txt('오의',58,46,9,'#ffb0a0');for(let i=0;i<5;i++){X.fillStyle=i<p.bombs?'#d8352a':'rgba(255,255,255,.12)';X.beginPath();X.arc(88+i*13,46,5,0,TAU);X.fill();if(i<p.bombs){txt('奧',88+i*13,46.5,7,'#ffe9a8','center','"Sasin Hanja",serif',null);}}
   txt('수호 '+p.opt,160,46,9,'#c8ffb0');});
-  {const q=qzScore();hudCache('R',[G.stage,G.dm.n,G.score,Math.floor(G.mult*10),Math.round((1-Math.min(1,G.multT/150))*60),G.hi,q.ok,q.n].join(),W-228,4,226,60,()=>{
-  X.save();X.translate(-30,0);
-  hudFrame(W-196,6,190,56,'#c49e63');{const q=qzScore();txt('복습 정답 '+q.ok+' / '+q.n,W-190,49,10,'#9dffb0');}
-  txt('제'+(G.stage+1)+'막 '+STG[G.stage].name,W-190,17,11,'#ffffff');txt(G.dm.n,W-190,25,8,'#9af8ff');
-  txt(G.score.toLocaleString(),W-12,19,17,'#f5c542','right');
-  txt('엽전 ×'+(Math.floor(G.mult*10)/10).toFixed(1),W-190,36,11,G.mult>=5?'#ff9a5a':'#f5c542');bar(W-118,33,60,5,1-Math.min(1,G.multT/150),'#45d6c8');
-  txt('최고 '+G.hi.toLocaleString(),W-12,38,9,'#a0a8c8','right');
-  X.restore();});}
+  {const q=qzScore(),near=!p.dead&&p.x<300&&p.y>H-78;X.globalAlpha=near?.3:.92;
+  hudCache('R',[G.stage,G.dm.n,G.score,Math.floor(G.mult*10),Math.round((1-Math.min(1,G.multT/150))*44),G.hi,q.ok,q.n].join(),46,H-46,236,44,()=>{
+  hudFrame(48,H-44,232,40,'#c49e63');
+  txt(G.score.toLocaleString(),56,H-33,14,'#f5c542');txt('최고 '+G.hi.toLocaleString(),274,H-33,8,'#a0a8c8','right');
+  txt('엽전 ×'+(Math.floor(G.mult*10)/10).toFixed(1),56,H-15,9,G.mult>=5?'#ff9a5a':'#f5c542');bar(104,H-18,44,4,1-Math.min(1,G.multT/150),'#45d6c8');
+  txt('복습 '+q.ok+'/'+q.n,156,H-15,9,'#9dffb0');txt('제'+(G.stage+1)+'막 · '+G.dm.n,274,H-15,8,'#9af8ff','right');});
+  X.globalAlpha=1;}
   if(G.boss){const b=G.boss,f=bossHp(b)/b.max;hudFrame(226,6,W-460,30,'#c49e63');
     bar(232,11,W-472,8,f,'#e02a2a','#2a0a0a');for(let i=1;i<3;i++){X.fillStyle='#c08030';X.fillRect(232+(W-472)*i/3,10,1.5,10);}
     const ph=['','파괴 가능 부위 '+partsLeft(b)+'개','본체 노출','최종 형태'][b.n==1?(b.ph==1?1:3):b.ph]||'';txt(STG[G.stage].boss+'  ['+ph+']',W/2,28,10,'#ffe0c0','center');}
@@ -2180,7 +2193,7 @@ startGame.disabled=true;
 loadCombatArt().then(ill=>{startGame.disabled=false;buildAnims(ill);}).catch(()=>{startGame.textContent='전투 그림을 열 수 없습니다';});
 showUI();requestAnimationFrame(frame);
 if(document.fonts)document.fonts.ready.then(()=>{});
-window.__G=G;window.__api={update,render,drawBG,drawAtmosphere,drawWorld,drawHUD,fit,PF,perfWatch,q:()=>({RS_CAP,LOWFX,RS}),drawPreview,newRun,qzBuild,qzNext,studyScreen,bossQuiz,popupQuiz,QZ,QS,startStage,doBomb,selectScreen,makeBoss,IN,A,AU,sfx,bgm,AN,fr,RIG,aniFrames};
+window.__G=G;window.__api={update,render,drawBG,drawAtmosphere,drawWorld,drawHUD,fit,PF,perfWatch,q:()=>({RS_CAP,LOWFX,RS}),hurt,respawn,WAVES,drawPreview,newRun,qzBuild,qzNext,studyScreen,bossQuiz,popupQuiz,QZ,QS,startStage,doBomb,selectScreen,makeBoss,IN,A,AU,sfx,bgm,AN,fr,RIG,aniFrames};
 }
 </script>
 </body>
