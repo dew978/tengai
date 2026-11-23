@@ -1730,7 +1730,7 @@ try{G.hi=+localStorage.getItem('ssb_hi')||0;}catch(e){}
 const IN={dx:0,dy:0,k:{},chg:false,touch:false};
 
 function newRun(){qzBuild();G.score=0;G.cont=0;G.stage=0;const d=DIF[G.dif];G.p={x:120,y:180,ch:G.ch,hp:d.lives,max:d.lives,bombs:3,pow:1,opt:0,inv:120,ft:0,hold:0,sk:0,cd:0,sp:[],frame:0,trail:[],dead:0};G.dm=d;startStage(0);}
-function startStage(n){G.stage=n;G.dm=stageDm(n);G.carT=0;G.en=[];G.sh=[];G.eb=[];G.co=[];G.it=[];G.pt=[];G.pop=[];G.boss=null;G.t=0;G.scroll=0;G.mult=1;G.multT=0;G.phase='intro';G.pt0=0;G.waveI=0;G.wt=0;G.quizPause=false;G.kills=0;G.stCoins=0;
+function startStage(n){G.stage=n;G.dm=stageDm(n);G.pwI=0;G.rf=[];G.en=[];G.sh=[];G.eb=[];G.co=[];G.it=[];G.pt=[];G.pop=[];G.boss=null;G.t=0;G.scroll=0;G.mult=1;G.multT=0;G.phase='intro';G.pt0=0;G.waveI=0;G.wt=0;G.quizPause=false;G.kills=0;G.stCoins=0;
   G.p.x=110;G.p.y=180;G.p.inv=120;G.talk={t:0,txt:LINES[G.ch][n]};BG.s=n;BG.tp=STG[n].tempo;BG.on=true;BG.i=0;G.state='play';showUI();hideOv();}
 
 /* ================= 생성 ================= */
@@ -1743,14 +1743,14 @@ const WAVES={
  dfV:()=>{const y=rnd(110,220);for(let i=0;i<5;i++){sp('df',W+20+i*18,y-i*16,{vx:-2.2});if(i)sp('df',W+20+i*18,y+i*16,{vx:-2.2});}},
  beetle:()=>{const n=G.stage>0?2:1;for(let i=0;i<n;i++)sp('bt',W+30,rnd(60,280),{mv:'stop',tx:rnd(420,540),ty:rnd(60,280),st:70,stay:200});},
  lantern:()=>{sp('ln',W+20,rnd(70,250),{mv:'stop',tx:rnd(440,560),ty:rnd(70,250),st:60,stay:150});},
- supply:()=>{sp('sup',W+20,rnd(80,220),{mv:'sine',vx:-1.3,amp:30,fq:.03,ph:0,drop:pick(['P','P','B','O','H','P'])});},
+ supply:()=>{sp('sup',W+20,rnd(80,220),{mv:'sine',vx:-1.3,amp:30,fq:.03,ph:0,drop:pick(['B','O','H'])});},
  bats:()=>{dly(4,i=>sp('bat',W+20,i%2?30:310,{mv:'dive',vx:-3.4,vy:0}),20);},
 cannons:()=>{if(STG[G.stage].ground)dly(2,i=>sp('can',W+20,302,{mv:'ground'}),40);},
  kettles:()=>{dly(3,i=>sp('ket',W+20,rnd(60,260),{mv:'stop',tx:rnd(460,560),ty:rnd(60,260),st:60,stay:120}),30);},
  junk:()=>{sp('junk',W+40,rnd(80,220),{mv:'stop',tx:rnd(470,540),ty:rnd(80,240),st:90,stay:260});},
  iceSwarm:()=>{dly(4,i=>sp('ice',W+20,rnd(50,270),{mv:'stop',tx:rnd(380,570),ty:rnd(50,270),st:60,stay:140}),24);},
-// two weak winged chests, each dropping a 力 (shot power) item
- carrier:()=>{const y=rnd(80,210);for(let i=0;i<2;i++)sp('sup',W+20+i*36,y+(i?44:0),{mv:'sine',vx:-1.6,amp:22,fq:.035,ph:i*2,drop:'P',hp:6});},
+// a weak winged chest carrying one 力 (shot power) item
+ carrier:()=>{sp('sup',W+20,rnd(80,210),{mv:'sine',vx:-1.6,amp:22,fq:.035,ph:0,drop:'P',hp:6});},
  oniRaid:()=>{dly(3,i=>sp('oni',W+20,70+i*90,{mv:'sine',vx:-1.7,amp:36,fq:.04,ph:i*2}),22);},
 };
 const DECK=[
@@ -1763,7 +1763,9 @@ const DECK=[
 // 복습 문제 칸(QZ): 웨이브 사이에 멈춤 문제 창을 끼워 넣는다.
 for(const d of DECK)for(const i of [3,8,13,18,23])d.splice(i,0,'QZ');
 WAVES.QZ=()=>popupQuiz();
-const CARRIER_GAP=1200;   // 20 s at 60 fps
+// 力 per stage: five carriers spread evenly over the wave part (none on a timer during the boss).
+// Each lost life sends extra carriers 20 s apart: one before the boss, two during the boss fight.
+const PWR={perStage:5,refill:1200};   // 1200 ticks = 20 s at 60 fps
 const WGAP=170,bossAt=n=>WGAP*DECK[n].length+110;
 
 /* ================= 탄 ================= */
@@ -1826,7 +1828,8 @@ const RESPAWN={wait:50,enter:40,shield:120};
 function hurt(){const p=G.p;if(p.inv>0||p.dead)return;p.hp--;sfx('hurt');sfx('big');G.shake=14;G.flash=8;boom(p.x,p.y,2.2);
   for(const b of G.eb)b.dead=1;p.hold=0;p.sk=0;sfxStop(AU.chg);AU.chg=null;p.dead=1;
   if(p.hp<=0){boom(p.x,p.y,2.4);setTimeout(()=>gameOver(),1400);return;}
-  p.respawn=RESPAWN.wait;}
+  p.respawn=RESPAWN.wait;
+  G.rf.push(PWR.refill);if(G.phase=='boss')G.rf.push(PWR.refill*2);}
 function respawn(){const p=G.p;p.dead=0;p.respawn=0;p.x=-40;p.y=180;p.enter=RESPAWN.enter;p.inv=RESPAWN.enter+RESPAWN.shield;
   p.pow=1;p.bombs=3;p.trail=[];p.sp.forEach(q=>{q.x=p.x;q.y=p.y;});pop(110,150,'재출격!','#fff2c0',14);}
 function getItem(k){const p=G.p;sfx('item');
@@ -1838,7 +1841,7 @@ function addScore(v,x,y){const s=Math.round(v*Math.max(1,Math.floor(G.mult*10)/1
 
 /* ================= 적 처리 ================= */
 function killEnemy(e){e.dead=1;G.kills++;boom(e.x,e.y,e.type=='junk'||e.type=='bt'?1.6:1);sfx('boom');coins(e.x,e.y,ET[e.type].co);addScore(ET[e.type].sc,e.x,e.y-10);
-  if(e.drop)G.it.push({x:e.x,y:e.y,vx:-1,vy:-1.5,k:e.drop,t:0});else if(e.type=='bt'&&R()<.35)G.it.push({x:e.x,y:e.y,vx:-1,vy:-1.5,k:'P',t:0});}
+  if(e.drop)G.it.push({x:e.x,y:e.y,vx:-1,vy:-1.5,k:e.drop,t:0});}
 function updEnemy(e){e.t++;if(e.fl)e.fl--;const fr=G.dm.fr;
   switch(e.mv){
     case'sine':e.x+=e.vx;e.y=e.y0+Math.sin(e.t*e.fq+e.ph)*e.amp;break;
@@ -1990,7 +1993,8 @@ function update(){
     if(G.wt>bossAt(G.stage)&&G.en.length==0){G.phase='warn';G.pt0=G.t;sfx('warn');}}
   else if(G.q&&G.q.length){for(let i=G.q.length-1;i>=0;i--)if(G.q[i].t<=G.t){G.q[i].f();G.q.splice(i,1);}}
   if(G.phase=='warn'){if((G.t-G.pt0)%85==0&&G.t-G.pt0<170)sfx('warn');if(G.t-G.pt0>170){G.phase='boss';G.boss=makeBoss(G.stage);}}
-  if(G.phase=='waves'||G.phase=='warn'||G.phase=='boss'){if(++G.carT>=CARRIER_GAP){G.carT=0;WAVES.carrier();}}
+  if(G.phase=='waves'&&G.pwI<PWR.perStage&&G.wt>=bossAt(G.stage)*(G.pwI+.5)/PWR.perStage){G.pwI++;WAVES.carrier();}
+  for(let i=G.rf.length-1;i>=0;i--)if(--G.rf[i]<=0){G.rf.splice(i,1);if(G.phase!='clear')WAVES.carrier();}
   if(G.phase=='clear'&&G.t-G.pt0>150){stageClear();return;}
   // 플레이어
   if(p.dead&&p.respawn>0&&--p.respawn==0)respawn();
